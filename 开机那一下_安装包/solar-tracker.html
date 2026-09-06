@@ -1,0 +1,380 @@
+<!DOCTYPE HTML>
+<!--
+	Forty by HTML5 UP
+	html5up.net | @ajlkn
+	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+-->
+<html lang="zh-CN">
+	<head>
+		<title>开机那一下 · 看得见的数学</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+		<meta name="description" content="舵机开机为什么会抽疯，怎么用位置反馈和 S 曲线让它安静地醒来。六个边界条件解一个方程组。" />
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<style>
+			.btn-en { font-size: 0.78em; opacity: 0.72; letter-spacing: 0.02em; }
+			.eqbox {
+				background: #f5f6f8; border-left: 3px solid #b388ff;
+				padding: 1.1rem 1.4rem; margin: 1.5rem 0; overflow-x: auto;
+				font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 0.92em; line-height: 2;
+			}
+			.eqbox .lbl { color: #7a7f8a; font-size: 0.85em; }
+		</style>
+		<noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
+	</head>
+	<body class="is-preload">
+
+		<div id="wrapper">
+
+			<!-- Header -->
+				<header id="header">
+					<a href="index.html" class="logo"><strong>看得见的数学</strong> <span>by BAOQUAN</span></a>
+					<nav><a href="#menu">Menu</a></nav>
+				</header>
+
+			<!-- Menu -->
+				<nav id="menu">
+					<ul class="links">
+						<li><a href="index.html">首页 &nbsp;Home</a></li>
+						<li><a href="vectors.html">向量与空间 &nbsp;Vectors</a></li>
+						<li><a href="matrix.html">矩阵与变换 &nbsp;Matrices</a></li>
+						<li><a href="calculus.html">变化与梯度 &nbsp;Calculus</a></li>
+						<li><a href="fitting.html">拟合与最小二乘 &nbsp;Least Squares</a></li>
+						<li><a href="neural.html">神经网络 &nbsp;Neural Networks</a></li>
+						<li><a href="fractals.html">分形与维数 &nbsp;Fractals</a></li>
+						<li><a href="solar-tracker.html">实战 · 开机那一下</a></li>
+						<li><a href="servo-calib.html">实战 · 舵机标定</a></li>
+					</ul>
+				</nav>
+
+			<!-- Main -->
+				<div id="main" class="alt">
+					<section id="one">
+						<div class="inner">
+
+							<header class="major">
+								<h1>开机那一下</h1>
+								<p>Servo Homing &amp; S-Curve Motion<br />
+								这不是一个跟踪太阳的实验，是两个具体问题：<strong>怎么让舵机开机不抽疯</strong>，
+								以及<strong>怎么让它平顺地走到位</strong>。</p>
+							</header>
+
+							<span class="image main"><img src="images/pic07M.jpg" alt="ESP32 双轴云台实物" /></span>
+
+							<h2>问题一：开机抽疯</h2>
+
+							<p>接上电的一瞬间，云台会猛地跳一下。原因不复杂：舵机是开环的，
+							它<em>不知道自己现在在哪</em>；而程序里 <code>attach()</code> 一执行，
+							舵机库就开始输出脉宽，舵机会用<strong>全速</strong>冲向那个脉宽对应的角度。
+							起点是 78° 还是 170° 它一概不管，反正就是冲。</p>
+
+							<p>这一下对塑料齿轮、对支架、对上面挂的电池板都不友好，
+							而且每次开机的冲击方向还不一样，取决于上次断电时停在哪。</p>
+
+							<p>之前试过各种办法：把第一条指令写得离 home 近一点、开机后先延时、
+							分几步慢慢挪。<strong>但这些本质上都是在猜起点</strong>——猜对了平顺，猜错了照样冲。</p>
+
+							<span class="image main"><img src="images/fig1_homing.png" alt="开机时序对比：抽疯与平滑" /></span>
+
+							<h3>解法：先问它在哪</h3>
+
+							<p>舵机内部那只反馈电位器一直知道输出轴的真实角度，只是从来没人问过它。
+							把中心抽头引出来接到 ADC（<a href="servo-calib.html">怎么拆、怎么焊、怎么标定见上一页</a>），
+							开机流程就能改成这样——<strong>顺序是全部的关键</strong>：</p>
+
+<pre><code>// ① attach 之前先读。此时舵机没通电，输出轴是自由的，
+//    电位器读到的就是它上次断电时停下的真实位置
+int rawAZ = readAverage(POT_AZ, 40);
+float azStart = constrain(azRawToDeg(rawAZ), AZ_MIN, AZ_MAX);
+
+// ② attach 之后立刻写入这个实测角度
+//    舵机收到的第一条指令是「待在原地」，于是它不动
+svAZ.attach(PIN_AZ, US_MIN, US_MAX);
+svAZ.write((int)roundf(azStart));
+azCmd = azStart;
+
+// ③ 起点已知，现在才谈得上「平滑地走过去」
+smoothMoveTo(AZ_HOME, EL_HOME, 1600);</code></pre>
+
+							<blockquote>这才是真正的 homing。之前所有的软化手段，本质上都是在猜起点。<br />
+							<span style="opacity:.7">—— 代码注释里的原话</span></blockquote>
+
+							<p>值得说一句：拆舵机、焊抽头、做标定，一路折腾下来最大的回报<em>不是</em>知道角度是多少，
+							而是这三行代码的顺序。有了真实起点，"平滑"这个词才有意义。</p>
+
+							<hr class="major" />
+
+							<h2>问题二：怎么算平顺</h2>
+
+							<p>知道了起点 78°、目标 120°，中间那 1.6 秒该怎么走？</p>
+
+							<p>最直觉的做法是线性插值，每 20 ms 挪同样的角度。但这样在<strong>起点和终点各有一次突变</strong>：
+							速度从 0 跳到某个值，走完又从那个值跳回 0。加速度在这两个瞬间是无穷大，
+							表现出来就是起步一顿、到位一撞。</p>
+
+							<p>所以要一条这样的曲线：起点终点位置对、<strong>起止速度为零</strong>、<strong>起止加速度也为零</strong>。
+							六个要求。</p>
+
+							<h3>六个条件，六个系数</h3>
+
+							<p>六个条件正好定住一个五次多项式。设 <em>s</em>(<em>t</em>) = <em>a</em><sub>0</sub> + <em>a</em><sub>1</sub><em>t</em> + … + <em>a</em><sub>5</sub><em>t</em><sup>5</sup>，把条件写成方程：</p>
+
+							<div class="eqbox">
+								<span class="lbl">起点三条（t = 0）：</span><br />
+								s(0)  = a₀                                  = 0　→　a₀ = 0<br />
+								s'(0) = a₁                                  = 0　→　a₁ = 0<br />
+								s''(0)= 2a₂                                 = 0　→　a₂ = 0<br />
+								<br />
+								<span class="lbl">终点三条（t = 1），前三个已归零，只剩 a₃ a₄ a₅：</span><br />
+								s(1)  =  a₃ +  a₄ +  a₅ = 1<br />
+								s'(1) = 3a₃ + 4a₄ + 5a₅ = 0<br />
+								s''(1)= 6a₃ +12a₄ +20a₅ = 0
+							</div>
+
+							<p>剩下的是一个三元一次方程组。它有没有唯一解，看系数行列式：</p>
+
+							<div class="eqbox">
+								|&nbsp;1&nbsp;&nbsp;&nbsp;1&nbsp;&nbsp;&nbsp;1&nbsp;|<br />
+								|&nbsp;3&nbsp;&nbsp;&nbsp;4&nbsp;&nbsp;&nbsp;5&nbsp;|&nbsp;&nbsp;=&nbsp;&nbsp;<strong>2 ≠ 0</strong>　→　三张平面交于一点，唯一解<br />
+								|&nbsp;6&nbsp;&nbsp;12&nbsp;&nbsp;20&nbsp;|
+							</div>
+
+							<p>消元解出 <em>a</em><sub>3</sub> = 10、<em>a</em><sub>4</sub> = −15、<em>a</em><sub>5</sub> = 6，于是</p>
+
+							<div class="eqbox" style="text-align:center;font-size:1.15em;border-left-color:#3ec8d8">
+								s(t) = 6t⁵ − 15t⁴ + 10t³
+							</div>
+
+							<p>那三个系数 6、−15、10 不是调出来的，也不是拟合出来的，
+							是这六个条件<strong>逼出来的唯一答案</strong>。想改平滑程度，得改条件，不能改系数。<br />
+							行列式与消元的展开 → <a href="vectors.html">向量与空间</a></p>
+
+							<span class="image main"><img src="images/fig2_scurve.png" alt="S 曲线的位置、速度、加速度" /></span>
+
+							<p>三张图从左到右就是那六个条件的样子：位置在两端各取一个值，速度在两端归零，加速度在两端也归零。
+							中间那张的钟形是速度曲线——起步慢、中段快、收尾慢，这正是手动开阀门的感觉。<br />
+							导数与二阶导数的含义 → <a href="calculus.html">变化与梯度</a></p>
+
+<pre><code>float sCurve(float t) { return t * t * t * (t * (t * 6.f - 15.f) + 10.f); }
+
+void smoothMoveTo(float azTgt, float elTgt, int ms) {
+  float a0 = azCmd, e0 = elCmd;          // 起点：实测出来的，不是猜的
+  int steps = ms / 20;
+  for (int i = 0; i &lt;= steps; i++) {
+    float s = sCurve((float)i / steps);
+    azCmd = a0 + (azTgt - a0) * s;
+    elCmd = e0 + (elTgt - e0) * s;
+    applyServos();
+    samplePosition();                     // 顺便记录实际跟得上跟不上
+    delay(20);
+  }
+}</code></pre>
+
+							<p>写成 <code>t*t*t*(t*(t*6-15)+10)</code> 是霍纳法则，两次乘法换掉五次幂运算，
+							在 20 ms 一次的控制循环里值得。</p>
+
+							<hr class="major" />
+
+							<h2>插值与拟合：一页里的一对</h2>
+
+							<p>这一页出现了两次"求系数"，它们看起来像，其实是两回事。</p>
+
+							<span class="image main"><img src="images/fig3_interp_vs_fit.png" alt="折线插值与多项式拟合对比" /></span>
+
+							<div class="table-wrapper">
+								<table class="alt">
+									<thead>
+										<tr><th></th><th>S 曲线</th><th>电位器标定</th></tr>
+									</thead>
+									<tbody>
+										<tr><td>已知</td><td>6 个边界条件</td><td>61 个实测点</td></tr>
+										<tr><td>未知</td><td>6 个系数</td><td>3 个系数</td></tr>
+										<tr><td>方程组</td><td>恰定</td><td>超定</td></tr>
+										<tr><td>做法</td><td><strong>插值</strong>：精确满足每个条件</td><td><strong>拟合</strong>：让总误差最小</td></tr>
+										<tr><td>结果</td><td>唯一解</td><td>最小二乘解</td></tr>
+									</tbody>
+								</table>
+							</div>
+
+							<p>固件里的标定用的是<strong>三点折线</strong>——取 60°、120°、180° 三个点，分两段线性插值。
+							这也是插值：它<em>精确通过</em>那三个点（左图的菱形），代价是两点之间靠直线糊弄。
+							当初选它是因为两点外推时中段能差 4°，加一个中间点分两段就压下去了。</p>
+
+							<p>拿 sweep 的 61 点数据回头验它，右图是结果：</p>
+
+							<div class="table-wrapper">
+								<table class="alt">
+									<thead>
+										<tr><th>方法</th><th>AZ 轴 RMS</th><th>说明</th></tr>
+									</thead>
+									<tbody>
+										<tr><td>三点折线（原样）</td><td>2.90°</td><td>含 −2.61° 系统偏置</td></tr>
+										<tr><td>三点折线（去掉偏置）</td><td>1.26°</td><td>形状本身的误差</td></tr>
+										<tr><td>3 阶多项式拟合</td><td>0.62°</td><td>形状误差减半</td></tr>
+									</tbody>
+								</table>
+							</div>
+
+							<p>换成多项式确实能把形状误差减半。但右图里真正扎眼的是那条红色虚线：
+							<strong>两次标定之间整体偏了 2.61°</strong>，比任何模型误差都大。
+							三点标定做于 2026-08-24，sweep 扫描是另一次采集，中间机械动过、电源换过——
+							一次拆装就够抹掉换模型带来的全部收益。</p>
+
+							<blockquote>上一页的结论是机械回差 2.07° 压过拟合残差 0.62°。<br />
+							这一页又添一条：标定漂移 2.61° 同样压过它。<br />
+							<strong>限制精度的从来不是数学，是物理。</strong></blockquote>
+
+							<p>所以折线换多项式这件事，优先级排在重新标定和消除回差<em>后面</em>。
+							知道该先修哪一个，比知道怎么修更值钱。<br />
+							最小二乘的展开 → <a href="fitting.html">拟合与最小二乘</a></p>
+
+							<hr class="major" />
+
+							<h2>系统构成</h2>
+
+							<p>整套东西是一台双轴云台：两只 MG90S 舵机，四个光敏电阻做四象限差分，
+							一块 SSD1306 显示状态，跑在 ACEBOTT ESP32 Max V1.0 上。</p>
+
+							<div class="table-wrapper">
+								<table class="alt">
+									<thead>
+										<tr><th>用途</th><th>引脚</th><th>备注</th></tr>
+									</thead>
+									<tbody>
+										<tr><td>AZ / EL 舵机信号</td><td>GPIO 5 / 16</td><td>脉宽 500–2400 µs</td></tr>
+										<tr><td>AZ / EL 电位器抽头</td><td>GPIO 32 / 33</td><td>ADC1</td></tr>
+										<tr><td>光敏 LU / RU / LD / RD</td><td>GPIO 36 / 39 / 34 / 35</td><td>只能输入，正好用来接传感器</td></tr>
+										<tr><td>OLED</td><td>GPIO 21 / 22</td><td>I²C</td></tr>
+									</tbody>
+								</table>
+							</div>
+
+							<p>引脚是<strong>被逼出来的分配</strong>。早期只有四个光敏时，它们占着 32/33/34/35 很舒服；
+							加上电位器反馈后要多两路 ADC，而 ADC2 开 WiFi 就废，能用的 ADC1 只有 32–39 这八个脚。
+							于是把 32/33 让给电位器（这两个脚可输入可输出，灵活），
+							光敏挪到 36/39——那两个是<strong>只能输入</strong>的脚，除了接传感器也干不了别的，正好物尽其用。</p>
+
+							<p>屏幕上那三个数是最常看的：</p>
+
+<pre><code>AZ 120.0>118.3 -1.7
+   指令   实测   差值 ← 舵机的稳态误差（死区 + 齿轮旷量）</code></pre>
+
+							<p>有了实测这一列，才第一次能<em>看见</em>指令和现实的差距。
+							在这之前，云台转到哪儿全靠肉眼估。</p>
+
+							<hr class="major" />
+
+							<h2>素材</h2>
+							<ul class="actions">
+								<li><a href="#" class="button" data-gated="assets/data/tracker_v4.ino">跟踪器固件 v4<br /><span class="btn-en">Firmware v4</span></a></li>
+								<li><a href="#" class="button" data-gated="assets/data/ldr_test.ino">光敏测试程序<br /><span class="btn-en">LDR test sketch</span></a></li>
+								<li><a href="servo-calib.html" class="button primary">回看：舵机标定<br /><span class="btn-en">Servo Calibration</span></a></li>
+							</ul>
+
+							<!-- 友情码弹窗 -->
+							<div id="gate" class="gate" role="dialog" aria-modal="true" aria-labelledby="gateTitle" hidden>
+								<div class="gate-card">
+									<h3 id="gateTitle">请输入友情码</h3>
+									<p class="gate-en">Enter the friendship code</p>
+									<p class="gate-hint">线索：首页那句话是谁说的？填他的姓，拼音或英文都行。<br />
+									<span class="gate-en">Hint: who said the line on the homepage? His surname will do.</span></p>
+									<input type="text" id="gateInput" autocomplete="off" spellcheck="false" aria-label="友情码 friendship code" />
+									<p class="gate-err" id="gateErr" hidden>不对，再想想　Not quite — try again</p>
+									<div class="gate-actions">
+										<button type="button" class="button primary small" id="gateOk">确定　Enter</button>
+										<button type="button" class="button small" id="gateCancel">取消　Cancel</button>
+									</div>
+								</div>
+							</div>
+
+						</div>
+					</section>
+				</div>
+
+			<!-- Footer -->
+				<footer id="footer">
+					<div class="inner">
+						<ul class="icons">
+							<li><a href="#" class="icon brands alt fa-github"><span class="label">GitHub</span></a></li>
+							<li><a href="mailto:kneadu@outlook.com" class="icon solid alt fa-envelope"><span class="label">Email</span></a></li>
+						</ul>
+						<ul class="copyright">
+							<li>&copy; 看得见的数学</li><li>Design: Baoquan Zhang</li><li>Template: <a href="https://html5up.net">HTML5 UP</a></li>
+						</ul>
+					</div>
+				</footer>
+
+		</div>
+
+		<!-- Scripts -->
+			<script src="assets/js/jquery.min.js"></script>
+			<script src="assets/js/jquery.scrolly.min.js"></script>
+			<script src="assets/js/jquery.scrollex.min.js"></script>
+			<script src="assets/js/browser.min.js"></script>
+			<script src="assets/js/breakpoints.min.js"></script>
+			<script src="assets/js/util.js"></script>
+			<script src="assets/js/main.js"></script>
+
+			<script>
+			(function () {
+				/* 友情码写在下面这行，改它即可（不区分大小写）。
+				   这只是礼节性的门，不是安全措施——码在源码里能看到。 */
+				var CODE = "poincare";
+				var ALIASES = ["poincare", "庞加莱", "彭加勒", "poincaré"];
+
+				var gate = document.getElementById("gate");
+				if (!gate) return;
+				var input  = document.getElementById("gateInput");
+				var errMsg = document.getElementById("gateErr");
+				var okBtn  = document.getElementById("gateOk");
+				var cancel = document.getElementById("gateCancel");
+				var pending = null, passed = false, lastFocus = null;
+
+				function norm(v){ return (v||"").trim().toLowerCase().replace(/\s+/g,""); }
+				function accepted(v){
+					var n = norm(v);
+					if (n === norm(CODE)) return true;
+					for (var i=0;i<ALIASES.length;i++) if (n === norm(ALIASES[i])) return true;
+					return false;
+				}
+				function grab(url){
+					var a=document.createElement("a");
+					a.href=url; a.download=url.split("/").pop();
+					document.body.appendChild(a); a.click(); document.body.removeChild(a);
+				}
+				function open_(){
+					lastFocus=document.activeElement;
+					gate.hidden=false; errMsg.hidden=true; input.value="";
+					setTimeout(function(){ input.focus(); },30);
+				}
+				function close_(){
+					gate.hidden=true; pending=null;
+					if(lastFocus&&lastFocus.focus) lastFocus.focus();
+				}
+				function submit(){
+					if(accepted(input.value)){
+						passed=true; var url=pending; close_(); if(url) grab(url);
+					}else{ errMsg.hidden=false; input.select(); }
+				}
+				Array.prototype.forEach.call(document.querySelectorAll("a[data-gated]"), function(a){
+					a.addEventListener("click", function(e){
+						e.preventDefault();
+						var url=a.getAttribute("data-gated");
+						if(passed){ grab(url); return; }
+						pending=url; open_();
+					});
+				});
+				okBtn.addEventListener("click", submit);
+				cancel.addEventListener("click", close_);
+				input.addEventListener("keydown", function(e){
+					if(e.key==="Enter"){ e.preventDefault(); submit(); }
+				});
+				document.addEventListener("keydown", function(e){
+					if(e.key==="Escape" && !gate.hidden) close_();
+				});
+				gate.addEventListener("click", function(e){ if(e.target===gate) close_(); });
+			})();
+			</script>
+
+	</body>
+</html>
