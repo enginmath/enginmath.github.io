@@ -1,0 +1,247 @@
+<!DOCTYPE HTML>
+<!--
+	Forty by HTML5 UP
+	html5up.net | @ajlkn
+	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+-->
+<html lang="zh-CN">
+	<head>
+		<title>舵机标定 · 看得见的数学</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+		<meta name="description" content="拆开舵机取出电位器抽头，用最小二乘把 ADC 读数拟合成真实角度，并找出限制精度的真正原因。" />
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
+	</head>
+	<body class="is-preload">
+
+		<div id="wrapper">
+
+			<!-- Header -->
+				<header id="header">
+					<a href="index.html" class="logo"><strong>看得见的数学</strong> <span>by BAOQUAN</span></a>
+					<nav>
+						<a href="#menu">Menu</a>
+					</nav>
+				</header>
+
+			<!-- Menu -->
+				<nav id="menu">
+					<ul class="links">
+						<li><a href="index.html">首页 &nbsp;Home</a></li>
+						<li><a href="vectors.html">向量与空间 &nbsp;Vectors</a></li>
+						<li><a href="matrix.html">矩阵与变换 &nbsp;Matrices</a></li>
+						<li><a href="calculus.html">变化与梯度 &nbsp;Calculus</a></li>
+						<li><a href="fitting.html">拟合与最小二乘 &nbsp;Least Squares</a></li>
+						<li><a href="neural.html">神经网络 &nbsp;Neural Networks</a></li>
+						<li><a href="fractals.html">分形与维数 &nbsp;Fractals</a></li>
+						<li><a href="solar-tracker.html">实战 · 太阳能跟踪</a></li>
+						<li><a href="servo-calib.html">实战 · 舵机标定</a></li>
+					</ul>
+				</nav>
+
+			<!-- Main -->
+				<div id="main" class="alt">
+					<section id="one">
+						<div class="inner">
+
+							<header class="major">
+								<h1>把舵机拆开，问它转到了哪里</h1>
+								<p>Servo Calibration · 用最小二乘把电位器读数变成角度<br />
+								原理见 → <a href="fitting.html">拟合与最小二乘</a></p>
+							</header>
+
+							<span class="image main"><img src="images/photo_teardown.jpg" alt="舵机后盖打开，白线从电位器中心抽头焊出" /></span>
+
+							<h2>为什么要拆</h2>
+							<p>普通舵机是<strong>开环</strong>的：你给它一个 PWM 脉宽，它自己转过去，然后什么也不告诉你。
+							转到没转到、被负载顶住了没有、齿轮有没有旷量，外面一概不知道。做双轴太阳能跟踪时这不够用——
+							算出来的方位角和仰角需要有人确认真的执行了。</p>
+
+							<p>但反馈其实一直在舵机肚子里：内部那只电位器本来就是给驱动板做闭环用的。
+							把中心抽头引一根线出来接到 ADC，舵机就有了角度输出。上面那张照片里的白线就是它。
+							代价是要拆开后盖焊一根线，好处是不用买带反馈的贵舵机。</p>
+
+							<hr class="major" />
+
+							<h2>接线</h2>
+							<span class="image main"><img src="images/fig0_wiring.png" alt="电位器抽头接线示意图" /></span>
+
+							<p>抽头只<em>并联</em>到 ADC，不切断舵机原有的三根线，驱动板照常工作。真正容易踩的坑是引脚选择：</p>
+
+							<div class="table-wrapper">
+								<table class="alt">
+									<thead>
+										<tr><th>信号</th><th>引脚</th><th>说明</th></tr>
+									</thead>
+									<tbody>
+										<tr><td>AZ 电位器抽头</td><td>GPIO 32</td><td>ADC1_CH4</td></tr>
+										<tr><td>EL 电位器抽头</td><td>GPIO 33</td><td>ADC1_CH5</td></tr>
+										<tr><td>AZ 舵机 PWM</td><td>GPIO 5</td><td>脉宽 500–2400 µs</td></tr>
+										<tr><td>EL 舵机 PWM</td><td>GPIO 16</td><td>同上</td></tr>
+										<tr><td>OLED</td><td>GPIO 21 / 22</td><td>I²C SDA / SCL</td></tr>
+									</tbody>
+								</table>
+							</div>
+
+							<p><strong>抽头必须接 ADC1（GPIO 32–39）。</strong>ESP32 的 ADC2 与 WiFi 射频共用资源，
+							一旦开了 WiFi 就读不出数——太阳能跟踪迟早要联网，用 ADC2 等于埋雷。
+							另外记得 <code>analogSetAttenuation(ADC_11db)</code> 把量程放到约 3.3 V，
+							以及舵机电源与 ESP32 <strong>共地</strong>，否则 ADC 读数会整体漂移。</p>
+
+							<hr class="major" />
+
+							<h2>怎么量</h2>
+							<p>让舵机以 2° 为步长走一遍全程，每停一个角度：</p>
+							<ul>
+								<li>等 <strong>350 ms</strong> 让机械停稳（这个值是试出来的，短了会读到还在动的位置）</li>
+								<li>连续采样 <strong>64 次</strong>，间隔 2 ms，记录均值、最小、最大和标准差</li>
+								<li>正扫一遍，再<strong>反扫一遍</strong>——这一步是为了量出机械回差</li>
+							</ul>
+							<p>AZ 轴 60°–180° 共 61 点，EL 轴 100°–170° 共 36 点，双向合计 194 行数据。</p>
+
+							<span class="image main"><img src="images/photo_bench.jpg" alt="工作台：烙铁、万用表、舵机与 ESP32" /></span>
+
+							<hr class="major" />
+
+							<h2>数据说了什么</h2>
+
+							<h3>一、它基本是线性的，但不够线性</h3>
+							<span class="image main"><img src="images/fig1_transfer.png" alt="AZ 与 EL 轴的传递曲线" /></span>
+							<p>灵敏度 AZ 是 18.2 counts/度、EL 是 19.0 counts/度，也就是 1 个 ADC 计数约合 0.055°。
+							分辨率完全够用。但注意曲线和那条虚线（两端点连成的理想直线）并不重合。</p>
+
+							<span class="image main"><img src="images/fig2_deviation.png" alt="偏离理想直线的曲线" /></span>
+							<p>把偏差单独画出来，形状是一条明显的弓：<strong>AZ 轴中段偏了 7°</strong>，EL 轴偏了 4°。
+							如果按两端点标定然后线性内插，中间就会差这么多。这就是需要拟合的理由。</p>
+
+							<h3>二、几阶够用</h3>
+							<span class="image main"><img src="images/fig3_residual.png" alt="一阶二阶三阶拟合残差对比" /></span>
+
+							<div class="table-wrapper">
+								<table class="alt">
+									<thead>
+										<tr><th>拟合阶数</th><th>AZ 轴 RMS</th><th>EL 轴 RMS</th></tr>
+									</thead>
+									<tbody>
+										<tr><td>1 阶（直线）</td><td>1.910°</td><td>1.170°</td></tr>
+										<tr><td>2 阶</td><td>0.929°</td><td>0.594°</td></tr>
+										<tr><td>3 阶</td><td>0.621°</td><td>0.510°</td></tr>
+										<tr><td>4 阶</td><td>0.610°</td><td>0.501°</td></tr>
+									</tbody>
+								</table>
+							</div>
+
+							<p>1 阶到 2 阶砍掉一半误差，2 阶到 3 阶还有三成收益，<strong>3 阶到 4 阶几乎没有变化</strong>。
+							模型到此为止，再加阶数只是在拟合噪声。所以选 3 阶。</p>
+
+							<h3>三、真正的限制在哪里</h3>
+							<span class="image main"><img src="images/fig4_budget.png" alt="误差预算条形图" /></span>
+
+							<p>这张图是整个实验最有价值的产出。64 次采样平均之后，测量噪声底只有 <strong>0.15°</strong>，
+							而 3 阶拟合残差是 0.62°——残差是噪声的四倍，说明<em>剩下的误差不是量不准，是拟合不动</em>。</p>
+
+							<p>再往上看：<strong>机械回差 2.07°</strong>，是拟合残差的三倍多。
+							同一个指令角度，正着转过来和倒着转过来，电位器读数差了约 38 个计数。这是齿轮间隙和摩擦的钱，不是数学的钱。</p>
+
+							<blockquote>把多项式从 2 阶升到 3 阶，误差从 0.93° 降到 0.62°，省下 0.31°。<br />
+							在控制里加一句"总是从同一个方向逼近目标角度"，一次省下 2°。<br />
+							<strong>升阶是在小数点后打转，消回差才是主要矛盾。</strong></blockquote>
+
+							<p>这个判断只有做了双向扫描才能得出。如果只正扫一遍，回差会藏在拟合残差里，
+							你会以为是模型不够好，然后徒劳地往上加阶数。</p>
+
+							<hr class="major" />
+
+							<h2>拟合结果</h2>
+							<p>用双向数据的平均值消掉回差偏置，再拟合 <em>ADC → 角度</em>（实际使用时是从读数反推角度，
+							所以自变量是 ADC，不是角度）。得到可以直接贴进固件的函数：</p>
+
+<pre><code>// AZ 轴：ADC → 角度，3 阶多项式，RMS 0.621°
+float azRawToDeg(int raw) {
+  float r  = (float)raw;
+  float r2 = r * r;
+  float r3 = r2 * r;
+  return -3.145869e-09f * r3 + 1.844709e-05f * r2
+       +  2.311168e-02f * r  + 5.814704e+00f;
+}
+
+// EL 轴：ADC → 角度，3 阶多项式，RMS 0.510°
+float elRawToDeg(int raw) {
+  float r  = (float)raw;
+  float r2 = r * r;
+  float r3 = r2 * r;
+  return -5.985777e-09f * r3 + 4.105006e-05f * r2
+       -  3.685087e-02f * r  + 5.706100e+01f;
+}</code></pre>
+
+							<p>注意系数跨了八个数量级。三次项系数是 10⁻⁹ 量级，用 <code>float</code> 在 ESP32 上还够，
+							但如果换成更高阶或更宽量程，最好把 ADC 读数先中心化再拟合，避免数值精度问题。</p>
+
+							<hr class="major" />
+
+							<h2>延伸：换成神经网络会怎样</h2>
+							<p>同一组标定数据，一边用最小二乘一步解出三阶系数，一边训练一个 1-12-12-1 的小网络，
+							看两者能到什么水平。</p>
+
+							<span class="image main"><img src="images/fig5_ls_vs_nn.png" alt="最小二乘与神经网络拟合对比" /></span>
+
+							<p>结果：最小二乘 <strong>0.621°</strong>，神经网络 <strong>0.615°</strong>。
+							网络稍微好一点点，代价是跑了三万轮梯度下降；最小二乘解一个线性方程组就出来了，
+							在 ESP32 上甚至能现算。</p>
+
+							<p>这不是说神经网络没用，而是说明一件事：<strong>当你知道曲线该长什么样的时候，
+							把形状写进模型比让网络自己猜要划算得多。</strong>这条曲线是电位器的分压特性，
+							本来就该是低阶光滑的，三个系数就够描述。网络的价值在于你<em>不知道</em>形状的场合。</p>
+
+							<p>顺带一提，两者的误差都卡在 0.6° 上下动不了——因为它们面对的是同一个天花板，
+							就是上面那 2° 的机械回差在数据里留下的印记。<em>换模型解决不了机械问题。</em></p>
+
+							<p>展开原理见 → <a href="fitting.html">拟合与最小二乘</a>　·　<a href="neural.html">神经网络</a></p>
+
+							<hr class="major" />
+
+							<h2>接线实拍与素材</h2>
+							<span class="image main"><img src="images/photo_wiring.jpg" alt="ESP32 扩展板上的实际接线，绿线为电位器抽头" /></span>
+							<p>绿色那两根就是从两只舵机引出的电位器抽头。这里有个容易掉进去的坑：
+							<strong>板上的丝印编号不是 GPIO 编号</strong>。照片里抽头插在标着 H16 / H17 的那一列接口上，
+							而代码里写的是 <code>POT_AZ = 32</code>、<code>POT_EL = 33</code>——扩展板有自己的一套接口编号，
+							中间隔着一张映射表。换一块扩展板，同样的 H16 可能就通到别的 GPIO 去了。
+							照着丝印号往代码里填是最常见的翻车方式，动手前先查一下手册。</p>
+
+							<ul class="actions">
+								<li><a href="assets/data/sweep.csv" class="button">下载标定数据 sweep.csv</a></li>
+								<li><a href="assets/data/sweep_fit.py" class="button">下载分析脚本 sweep_fit.py</a></li>
+								<li><a href="solar-tracker.html" class="button primary">下一步：让云台转起来 &rarr;</a></li>
+							</ul>
+
+						</div>
+					</section>
+				</div>
+
+			<!-- Footer -->
+				<footer id="footer">
+					<div class="inner">
+						<ul class="icons">
+							<li><a href="#" class="icon brands alt fa-github"><span class="label">GitHub</span></a></li>
+							<li><a href="mailto:kneadu@outlook.com" class="icon solid alt fa-envelope"><span class="label">Email</span></a></li>
+						</ul>
+						<ul class="copyright">
+							<li>&copy; 看得见的数学</li><li>Design: Baoquan Zhang</li><li>Template: <a href="https://html5up.net">HTML5 UP</a></li>
+						</ul>
+					</div>
+				</footer>
+
+		</div>
+
+		<!-- Scripts -->
+			<script src="assets/js/jquery.min.js"></script>
+			<script src="assets/js/jquery.scrolly.min.js"></script>
+			<script src="assets/js/jquery.scrollex.min.js"></script>
+			<script src="assets/js/browser.min.js"></script>
+			<script src="assets/js/breakpoints.min.js"></script>
+			<script src="assets/js/util.js"></script>
+			<script src="assets/js/main.js"></script>
+
+	</body>
+</html>
