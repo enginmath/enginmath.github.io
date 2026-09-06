@@ -4,11 +4,12 @@
 	html5up.net | @ajlkn
 	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
 -->
-<html>
+<html lang="zh-CN">
 	<head>
-		<title>Baquan’s Personal Site</title>
+		<title>看得见的数学 · Visual Mathematics</title>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+		<meta name="description" content="用三维图形和交互演示重新讲一遍数学：向量、矩阵、梯度、最小二乘、神经网络与分形。" />
 		<link rel="stylesheet" href="assets/css/main.css" />
 		<noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
 	</head>
@@ -19,7 +20,7 @@
 
 				<!-- Header -->
 					<header id="header" class="alt">
-						<a href="index.html" class="logo"><strong>Survivor</strong> <span>by BAOQUAN</span></a>
+						<a href="index.html" class="logo"><strong>看得见的数学</strong> <span>by BAOQUAN</span></a>
 						<nav>
 							<a href="#menu">Menu</a>
 						</nav>
@@ -28,14 +29,18 @@
 				<!-- Menu -->
 					<nav id="menu">
 						<ul class="links">
-							<li><a href="index.html">Home</a></li>
-							<li><a href="landing.html">Landing</a></li>
-							<li><a href="generic.html">Generic</a></li>
-							<li><a href="elements.html">Elements</a></li>
+							<li><a href="index.html">首页 &nbsp;Home</a></li>
+							<li><a href="vectors.html">向量与空间 &nbsp;Vectors</a></li>
+							<li><a href="matrix.html">矩阵与变换 &nbsp;Matrices</a></li>
+							<li><a href="calculus.html">变化与梯度 &nbsp;Calculus</a></li>
+							<li><a href="fitting.html">拟合与最小二乘 &nbsp;Least Squares</a></li>
+							<li><a href="neural.html">神经网络 &nbsp;Neural Networks</a></li>
+							<li><a href="fractals.html">分形与维数 &nbsp;Fractals</a></li>
+							<li><a href="personal.html">关于我 &nbsp;About</a></li>
 						</ul>
 						<ul class="actions stacked">
-							<li><a href="#" class="button primary fit">Get Started</a></li>
-							<li><a href="#" class="button fit">Log In</a></li>
+							<li><a href="vectors.html" class="button primary fit">从向量开始</a></li>
+							<li><a href="#contact" class="button fit">留言 Contact</a></li>
 						</ul>
 					</nav>
 
@@ -43,13 +48,13 @@
 					<section id="banner" class="major">
 						<div class="inner">
 							<header class="major">
-								<h1>我本来很亮，只是被挂在一根网线上</h1>
+								<h1>数学是给不同的事物<br />赋予同一个名字的艺术</h1>
 							</header>
 							<div class="content">
-								<p>普通人的一生，哪有什么辉煌。只是一支不长不短的蜡，燃烧自己，些许光亮。<br />
-								把投下的影子带到一个有着落的地方，叠放整齐，让它歇歇脚，轻轻躺下。。。</p>
+								<p>Mathematics is the art of giving the same name to different things.<br />
+								<em>— Henri Poincaré, 1908</em></p>
 								<ul class="actions">
-									<li><a href="#one" class="button next scrolly">宝泉欢迎您</a></li>
+									<li><a href="#one" class="button next scrolly">从向量开始 &nbsp;Start Here</a></li>
 								</ul>
 							</div>
 						</div>
@@ -62,56 +67,62 @@
 							<section id="one" class="tiles">
 								<article>
 									<span class="image">
-										<img src="images/pic01A.jpg" alt="" />
+										<img src="images/pic01M.jpg" alt="平行六面体与法向量" />
 									</span>
 									<header class="major">
-										<h3><a href="landing.html" class="link">初始坐标</a></h3>
-										<p>Place of Birth</p>
+										<h3><a href="vectors.html" class="link">向量与空间</a></h3>
+										<p>Vectors &amp; Space<br />
+										点积测重合，叉积测张开，行列式量体积</p>
 									</header>
 								</article>
 								<article>
 									<span class="image">
-										<img src="images/pic02A.jpg" alt="" />
+										<img src="images/pic02M.jpg" alt="立方体被线性变换成平行六面体" />
 									</span>
 									<header class="major">
-										<h3><a href="landing.html" class="link">早期版本</a></h3>
-										<p>My Childhood</p>
+										<h3><a href="matrix.html" class="link">矩阵与变换</a></h3>
+										<p>Matrices &amp; Transformations<br />
+										矩阵不是数表，是一次空间的形变</p>
 									</header>
 								</article>
 								<article>
 									<span class="image">
-										<img src="images/pic03A.jpg" alt="" />
+										<img src="images/pic03M.jpg" alt="曲面与底面的梯度场" />
 									</span>
 									<header class="major">
-										<h3><a href="landing.html" class="link">过期档案</a></h3>
-										<p>Past Experiences</p>
+										<h3><a href="calculus.html" class="link">变化与梯度</a></h3>
+										<p>Change &amp; Gradients<br />
+										导数是斜率，梯度是最陡的那个方向</p>
 									</header>
 								</article>
 								<article>
 									<span class="image">
-										<img src="images/pic04A.jpg" alt="" />
+										<img src="images/pic04M.jpg" alt="散点、拟合平面与残差" />
 									</span>
 									<header class="major">
-										<h3><a href="landing.html" class="link">当前运行</a></h3>
-										<p>Retirement Life</p>
+										<h3><a href="fitting.html" class="link">拟合与最小二乘</a></h3>
+										<p>Fitting &amp; Least Squares<br />
+										让残差最短，就是做一次正交投影</p>
 									</header>
 								</article>
 								<article>
 									<span class="image">
-										<img src="images/pic05A.jpg" alt="" />
+										<img src="images/pic05M.jpg" alt="四层神经网络结构" />
 									</span>
 									<header class="major">
-										<h3><a href="landing.html" class="link">冲浪小舟</a></h3>
-										<p>Python & Arduino</p>
+										<h3><a href="neural.html" class="link">神经网络</a></h3>
+										<p>Neural Networks<br />
+										一层矩阵，一次弯折，反复堆叠</p>
 									</header>
 								</article>
 								<article>
 									<span class="image">
-										<img src="images/pic06A.jpg" alt="" />
+										<img src="images/pic06M.jpg" alt="谢尔宾斯基四面体" />
 									</span>
 									<header class="major">
-										<h3><a href="landing.html" class="link"></a>茶余饭后</h3>
-										<p>Language Learning</p>
+										<h3><a href="fractals.html" class="link">分形与维数</a></h3>
+										<p>Fractals &amp; Dimension<br />
+										维数未必是整数，测度给出答案</p>
 									</header>
 								</article>
 							</section>
@@ -120,14 +131,18 @@
 							<section id="two">
 								<div class="inner">
 									<header class="major">
-										<h2>让故事慢慢躺下</h2>
+										<h2>先看见，再证明</h2>
 									</header>
-									<p>匆匆走来，行囊塞满乱七八糟。大多鸡毛蒜皮已经撒落，有些重的却沉在底部，或夹在缝隙，或挤在角落。  
-                                         几十年的人生，大多不是平稳的日子，但总体还算顺溜。有一些原本清晰的片段，慢慢变得残缺模糊。  
-                                         找个筐，把这些零零散散的陈芝麻烂谷子简单装下，只是给过去找一个落脚的地方。  
-                                         如果刚好看到，那就算作过去我曾预约了---这次小小的相遇。</p>
-						                <ul class="actions">
-										<li><a href="landing.html" class="button next">Get Started</a></li>
+									<p>公式背下来了，却不知道它是干什么用的——这是数学最容易丢掉的一环。
+									这里换一种讲法：每个概念先给一张能转动的三维图，再给能拖动参数的交互演示，
+									最后才写下那行公式。<br /><br />
+									于是你会看到，电场穿过一块板、游戏画面里一个像素的明暗、正午楼房投在地上的影子、
+									天线该抬多高才对准卫星——四件毫不相干的事，背后是同一个点积。
+									学过的东西，其实一直在你身边运转。<br /><br />
+									<em>Formulas are easy to memorize and easy to forget. Here we start from a picture
+									you can rotate, move to a demo you can drag, and only then write the formula down.</em></p>
+									<ul class="actions">
+										<li><a href="vectors.html" class="button next">从第一章开始 &nbsp;Begin</a></li>
 									</ul>
 								</div>
 							</section>
@@ -141,15 +156,15 @@
 								<form onsubmit="return false;">
 									<div class="fields">
 										<div class="field half">
-											<label for="name">您的大名</label>
+											<label for="name">您的大名 &nbsp;Name</label>
 											<input type="text" name="name" id="name" />
 										</div>
 										<div class="field half">
-											<label for="email">您的Email</label>
+											<label for="email">您的 Email</label>
 											<input type="text" name="email" id="email" />
 										</div>
 										<div class="field">
-											<label for="message">请客或是吐槽</label>
+											<label for="message">提问或是指错 &nbsp;Message</label>
 											<textarea name="message" id="message" rows="6"></textarea>
 										</div>
 									</div>
@@ -191,14 +206,12 @@
 					<footer id="footer">
 						<div class="inner">
 							<ul class="icons">
-								<li><a href="#" class="icon brands alt fa-twitter"><span class="label">Twitter</span></a></li>
-								<li><a href="#" class="icon brands alt fa-facebook-f"><span class="label">Facebook</span></a></li>
-								<li><a href="#" class="icon brands alt fa-instagram"><span class="label">Instagram</span></a></li>
 								<li><a href="#" class="icon brands alt fa-github"><span class="label">GitHub</span></a></li>
-								<li><a href="#" class="icon brands alt fa-linkedin-in"><span class="label">LinkedIn</span></a></li>
+								<li><a href="personal.html" class="icon solid alt fa-user"><span class="label">About</span></a></li>
+								<li><a href="mailto:kneadu@outlook.com" class="icon solid alt fa-envelope"><span class="label">Email</span></a></li>
 							</ul>
 							<ul class="copyright">
-								<li>&copy; Survivor</li><li>Design: Baoquan Zhang</li>
+								<li>&copy; 看得见的数学</li><li>Design: Baoquan Zhang</li><li>Template: <a href="https://html5up.net">HTML5 UP</a></li>
 							</ul>
 						</div>
 					</footer>
@@ -213,18 +226,18 @@
 			<script src="assets/js/breakpoints.min.js"></script>
 			<script src="assets/js/util.js"></script>
 			<script src="assets/js/main.js"></script>
-            <script>
-                   function sendMail() {
-                   var name = document.getElementById('name').value;
-                   var email = document.getElementById('email').value;
-                   var message = document.getElementById('message').value;
-                   var body =
-                   "姓名：" + name + "%0D%0A" +
-                   "邮箱：" + email + "%0D%0A" +
-                   "内容：" + message;
-                    window.location.href =
-                   "mailto:kneadu@outlook.com?subject=网站留言&body=" + body;
-                   }
-</script>
+			<script>
+				function sendMail() {
+					var name = document.getElementById('name').value;
+					var email = document.getElementById('email').value;
+					var message = document.getElementById('message').value;
+					var body =
+						"姓名：" + name + "%0D%0A" +
+						"邮箱：" + email + "%0D%0A" +
+						"内容：" + message;
+					window.location.href =
+						"mailto:kneadu@outlook.com?subject=网站留言&body=" + body;
+				}
+			</script>
 	</body>
 </html>
