@@ -1,0 +1,475 @@
+<!DOCTYPE HTML>
+<!--
+	Forty by HTML5 UP
+	html5up.net | @ajlkn
+	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+-->
+<html lang="zh-CN">
+	<head>
+		<title>拟合与最小二乘 · 看得见的数学</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+		<meta name="description" content="b 够不着列空间怎么办：找最近的点。最近意味着残差垂直，垂直写成方程就是正规方程。" />
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<style>
+			.btn-en { font-size: 0.78em; opacity: 0.72; letter-spacing: 0.02em; }
+			.eqbox {
+				background: #16223a; color: #e6ecf5;
+				border-left: 3px solid #b388ff; border-radius: 3px;
+				padding: 1.2rem 1.5rem; margin: 1.6rem 0; overflow-x: auto;
+				font-size: 0.95em; line-height: 2;
+			}
+			.eqbox .lbl { color: #93a4c0; font-size: 0.85em; }
+			.eqbox strong { color: #f7c579; }
+			.concept {
+				border: 1px solid #dfe3e8; border-left: 4px solid #b388ff;
+				border-radius: 4px; padding: 1.4rem 1.6rem 0.9rem; margin: 1.8rem 0;
+			}
+			.concept h3 { margin: 0 0 1rem; }
+			.concept h3 .en { font-size: 0.62em; opacity: 0.5; font-weight: 400; letter-spacing: 0.04em; }
+			.concept dl { margin: 0; }
+			.concept dt {
+				font-size: 0.72em; letter-spacing: 0.15em; text-transform: uppercase;
+				color: #8a94a6; margin-top: 0.9rem; font-weight: 600;
+			}
+			.concept dd { margin: 0.15rem 0 0; line-height: 1.75; }
+			.concept .zero { color: #c0392b; }
+			.chain {
+				border-left: 4px solid #6ed6a0; padding: 0.2rem 0 0.2rem 1.4rem; margin: 2rem 0;
+			}
+			.chain h3 { margin: 0 0 0.4rem; font-size: 1.05em; }
+			.chain p { margin: 0; }
+			.gate {
+				position: fixed; inset: 0; z-index: 10000;
+				display: flex; align-items: center; justify-content: center; padding: 1.5rem;
+				background: rgba(13, 22, 38, 0.55);
+				backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+			}
+			.gate[hidden] { display: none; }
+			.gate-card {
+				background: #16223a; color: #e6ecf5; border: 1px solid #2a3c5e; border-radius: 5px;
+				padding: 2.1rem 2.25rem 1.8rem; max-width: 27rem; width: 100%;
+				box-shadow: 0 1.4rem 3.5rem rgba(0,0,0,.45); text-align: center;
+			}
+			.gate-card h3 { margin: 0 0 0.3rem; color: #f7c579; font-size: 1.15em; }
+			.gate-en { opacity: 0.55; font-size: 0.85em; margin: 0 0 0.4rem; }
+			.gate-hint { font-size: 0.85em; color: #93a4c0; margin: 0.9rem 0 1.3rem; line-height: 1.8; }
+			.gate-card input[type="text"] {
+				background: #0d1626; border: 1px solid #2a3c5e; color: #e6ecf5; border-radius: 3px;
+				text-align: center; font-size: 1.15em; letter-spacing: 0.08em; margin-bottom: 0.8rem;
+			}
+			.gate-card input[type="text"]:focus { border-color: #b388ff; box-shadow: none; }
+			.gate-err { color: #ef6a5e; font-size: 0.85em; margin: 0 0 0.8rem; }
+			.gate-err[hidden] { display: none; }
+			.gate-actions { display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap; }
+			.gate-actions .button { margin: 0; }
+			.gate-actions .button:not(.primary) { color: #93a4c0; box-shadow: inset 0 0 0 1px #2a3c5e; }
+		</style>
+		<script>
+			window.MathJax = {
+				tex: { inlineMath: [['$','$']], displayMath: [['$$','$$']] },
+				options: { skipHtmlTags: ['script','noscript','style','textarea','pre','code'] }
+			};
+		</script>
+		<script id="MathJax-script" async
+			src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.min.js"></script>
+		<noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
+	</head>
+	<body class="is-preload">
+
+		<div id="wrapper">
+
+			<header id="header">
+				<a href="index.html" class="logo"><strong>看得见的数学</strong> <span>by BAOQUAN</span></a>
+				<nav><a href="#menu">Menu</a></nav>
+			</header>
+
+			<nav id="menu">
+				<ul class="links">
+					<li><a href="index.html">首页 &nbsp;Home</a></li>
+					<li><a href="vectors.html">向量与空间 &nbsp;Vectors</a></li>
+					<li><a href="matrix.html">矩阵与变换 &nbsp;Matrices</a></li>
+					<li><a href="calculus.html">变化与梯度 &nbsp;Calculus</a></li>
+					<li><a href="fitting.html">拟合与最小二乘 &nbsp;Least Squares</a></li>
+					<li><a href="neural.html">神经网络 &nbsp;Neural Networks</a></li>
+					<li><a href="fractals.html">分形与维数 &nbsp;Fractals</a></li>
+					<li><a href="solar-tracker.html">实战 · 开机那一下</a></li>
+					<li><a href="servo-calib.html">实战 · 舵机标定</a></li>
+				</ul>
+			</nav>
+
+			<div id="main" class="alt">
+				<section id="one">
+					<div class="inner">
+
+						<header class="major">
+							<h1>拟合与最小二乘</h1>
+							<p>Fitting &amp; Least Squares<br />
+							当 $\mathbf b$ 够不着列空间，方程无解——不是算错了，是本来就到不了。<br />
+							那就退而求其次：在够得着的范围里，找离它最近的那个点。</p>
+						</header>
+
+						<div class="eqbox" style="border-left-color:#f0a63c">
+							<span class="lbl">承上</span><br />
+							上一板块讲过：$A\mathbf x=\mathbf b$ 有解，当且仅当 $\mathbf b$ 落在列空间里。<br />
+							<strong>这一板块处理的正是"落不进去"的情况——而现实中的数据，几乎总是落不进去。</strong>
+						</div>
+
+						<h2>问题从哪来</h2>
+
+						<p>舵机标定那一页量了 61 个点，要拟合一条三阶曲线，也就是求 4 个系数。
+						写成方程组就是 <strong>61 个方程、4 个未知数</strong>。</p>
+
+						<p>方程比未知数多得多，这叫<strong>超定</strong>。除非 61 个点恰好严丝合缝地落在同一条三次曲线上——
+						有测量噪声、有机械回差，这不可能——否则<em>无解</em>。</p>
+
+						<p>但"无解"显然不是我们要的答案。舵机还得转，固件里那个函数还得写出来。
+						所以问题要换个问法：<strong>既然到不了 $\mathbf b$，那在够得着的地方，哪一点离它最近？</strong></p>
+
+						<hr class="major" />
+
+						<h2>最近的点，是垂足</h2>
+
+						<span class="image main"><img src="images/fit1_projection.png" alt="b 不在列空间里，最近的点是投影，残差垂直" /></span>
+
+						<p>左图：$\mathbf b$ 悬在列空间外面，怎么调 $\mathbf x$ 都够不着。<br />
+						右图：列空间里离 $\mathbf b$ 最近的点，是 $\mathbf b$ 在这张平面上的<strong>垂足</strong>。</p>
+
+						<p>为什么是垂足？因为如果残差 $\mathbf r=\mathbf b-A\hat{\mathbf x}$ 不垂直于列空间，
+						那它一定还有一个分量躺在列空间里——顺着那个方向再挪一点，就能更近。
+						<strong>挪到不能再挪的时候，残差就只剩垂直分量了。</strong></p>
+
+						<div class="chain">
+							<h3>整条推理链，五步</h3>
+							<p>$A\mathbf x\approx\mathbf b$
+							$\;\to\;$ 最近点是投影 $A\hat{\mathbf x}=\mathrm{proj}_{C(A)}\mathbf b$
+							$\;\to\;$ 残差 $\mathbf r=\mathbf b-A\hat{\mathbf x}$
+							$\;\to\;$ $\mathbf r\perp C(A)$，也就是 $\mathbf r$ 垂直于 $A$ 的<em>每一个</em>列
+							$\;\to\;$ 写成矩阵就是 $A^{\mathsf T}\mathbf r=\mathbf 0$</p>
+						</div>
+
+						<p>最后一步代入 $\mathbf r=\mathbf b-A\hat{\mathbf x}$：</p>
+
+						<div class="eqbox" style="text-align:center;border-left-color:#6ed6a0">
+							$A^{\mathsf T}(\mathbf b-A\hat{\mathbf x})=\mathbf 0
+							\quad\Longrightarrow\quad
+							\boxed{A^{\mathsf T}A\,\hat{\mathbf x}=A^{\mathsf T}\mathbf b}$
+							<br /><span class="lbl">正规方程 Normal Equations</span>
+						</div>
+
+						<p>"垂直"这个几何条件，一路化成了一个可以直接解的方程组。
+						而"垂直"的代数形式就是<strong>点积为零</strong>——第一板块讲的那件事，在这里兑现了。</p>
+
+						<hr class="major" />
+
+						<h2>三条路，同一个式子</h2>
+
+						<p>这个式子不止一种推法。三条完全不同的路，走到同一个终点：</p>
+
+						<span class="image main"><img src="images/fit3_three_views.png" alt="微积分、线性代数、几何三个视角推出同一个正规方程" /></span>
+
+						<div class="table-wrapper">
+							<table class="alt">
+								<thead>
+									<tr><th>视角</th><th>怎么做</th><th>好处</th><th>代价</th></tr>
+								</thead>
+								<tbody>
+									<tr>
+										<td><strong>微积分</strong></td>
+										<td>把残差平方和 $S$ 对每个系数求偏导，令导数为零</td>
+										<td>只用高中导数，人人能跟</td>
+										<td>系数一多就写不动</td>
+									</tr>
+									<tr>
+										<td><strong>线性代数</strong></td>
+										<td>对整个向量求导 $\nabla_{\mathbf x}\lVert A\mathbf x-\mathbf b\rVert^2=0$</td>
+										<td>一步得矩阵形式，不管几个系数</td>
+										<td>要先接受向量求导的记号</td>
+									</tr>
+									<tr>
+										<td><strong>几何</strong></td>
+										<td>残差垂直于列空间</td>
+										<td>一行写完，而且看得见</td>
+										<td>要先理解列空间</td>
+									</tr>
+								</tbody>
+							</table>
+						</div>
+
+						<p>三条路殊途同归这件事本身就值得留意：<strong>当一个式子能从毫不相干的三个方向推出来，
+						它多半抓住了某种本质，而不是某种技巧。</strong></p>
+
+						<hr class="major" />
+
+						<h2>可是 A 没有逆啊</h2>
+
+						<p>这里有个几乎人人都会卡住的地方。既然要解 $A\mathbf x=\mathbf b$，
+						为什么不直接两边乘 $A^{-1}$？</p>
+
+						<p>因为 <strong>$A$ 是 61×4 的，不是方阵，根本没有逆</strong>。
+						"逆"意味着能把变换原样倒回去，而 $A$ 把 4 维压进了 61 维空间里的一张 4 维薄片——
+						61 维里绝大多数向量它根本够不着，谈何倒回去。</p>
+
+						<span class="image main"><img src="images/fit2_squeeze.png" alt="左乘 A 转置把 61 个方程压成 3 个" /></span>
+
+						<p>正规方程的高明之处，是把这件事<strong>拆成两步</strong>：</p>
+
+						<div class="chain" style="border-left-color:#f0a63c">
+							<h3>第一步：$A^{\mathsf T}$ 负责把方程变少</h3>
+							<p>左乘 $A^{\mathsf T}$，61 个方程压成 4 个。
+							这一步<em>任何矩阵都能做</em>，不需要可逆——它只是把每个列向量分别和残差做点积。</p>
+						</div>
+
+						<div class="chain" style="border-left-color:#6ed6a0">
+							<h3>第二步：$(A^{\mathsf T}A)^{-1}$ 负责把系数解出来</h3>
+							<p>压完之后 $A^{\mathsf T}A$ 是 4×4 的方阵，<em>这一步才需要可逆</em>。
+							只要 $A$ 的列线性无关，它就可逆。</p>
+						</div>
+
+						<div class="eqbox">
+							<span class="lbl">一句话记住</span><br />
+							$A^{\mathsf T}$ 负责把方程变少，$(A^{\mathsf T}A)^{-1}$ 负责把系数解出来。<br />
+							<strong>$A$ 本身没有逆，所以从来就没有"撤销整个 61 维变换"这回事。</strong>
+						</div>
+
+						<p>两步合起来写成一个符号，叫<strong>伪逆</strong> $A^{+}=(A^{\mathsf T}A)^{-1}A^{\mathsf T}$。
+						名字里的"伪"就是这个意思：它不是真的逆，只是在够得着的范围里做了最好的还原。</p>
+
+						<hr class="major" />
+
+						<h2>矩阵不是向量</h2>
+
+						<p>顺带说一个容易含糊的地方。$A$ 是个矩阵，不是向量，也不是一堆散数——
+						它是<strong>一叠列向量摞在一起</strong>。</p>
+
+						<span class="image main"><img src="images/photo_toast.jpg" alt="用一条吐司类比矩阵、列向量、列空间与秩" /></span>
+
+						<p>整条吐司是矩阵 $A$。竖着切一刀得到一片，那是一个<strong>列向量</strong>。
+						这些片能张成的空间就是<strong>列空间</strong>，而<strong>真正独立的片数就是秩</strong>——
+						如果有两片一模一样，它俩只算一片。</p>
+
+						<p>还有一处值得提醒：$A\mathbf x=\mathbf 0$ 里那个 $\mathbf 0$
+						<strong>不是数字零，是零向量</strong>。它代表 $m$ 个等号，每个右边都是 0，
+						不是"最后那一堆加起来等于 0"这么一句。这个区别在判断线性相关时特别要紧。</p>
+
+						<hr class="major" />
+
+						<h2>四个概念</h2>
+
+						<div class="concept">
+							<h3>残差　<span class="en">Residual</span></h3>
+							<dl>
+								<dt>是什么</dt>
+								<dd>$\mathbf r=\mathbf b-A\hat{\mathbf x}$，实测值与拟合值之差。</dd>
+								<dt>在量什么</dt>
+								<dd>模型没能解释的那一部分。它<strong>永远垂直于列空间</strong>——
+								如果不垂直，说明还没拟合到最好。</dd>
+								<dt>结构位置</dt>
+								<dd>$\mathbf b$ 被劈成两半：一半在列空间里（模型能解释的），
+								一半垂直于列空间（模型解释不了的）。这个分解是唯一的。</dd>
+								<dt>为零意味着</dt>
+								<dd class="zero">数据恰好落在模型上，$\mathbf b$ 本来就在列空间里。现实中几乎不会发生。</dd>
+							</dl>
+						</div>
+
+						<div class="concept" style="border-left-color:#f0a63c">
+							<h3>超定　<span class="en">Overdetermined</span></h3>
+							<dl>
+								<dt>是什么</dt>
+								<dd>方程个数多于未知数个数。舵机标定是 61 个方程、4 个未知数。</dd>
+								<dt>在量什么</dt>
+								<dd>数据比模型"富余"。富余不是坏事——正是这些冗余在对抗噪声。</dd>
+								<dt>结构位置</dt>
+								<dd>与之相对的是<strong>恰定</strong>（方程数等于未知数，唯一解）
+								和<strong>欠定</strong>（方程数少于未知数，无穷多解）。
+								S 曲线那个 6 条件 6 系数就是恰定。</dd>
+								<dt>反过来说</dt>
+								<dd class="zero">数据点如果少于系数个数，拟合出来的曲线会完美穿过每个点——
+								但那不是拟合，那是过拟合。</dd>
+							</dl>
+						</div>
+
+						<div class="concept" style="border-left-color:#6ed6a0">
+							<h3>正规方程　<span class="en">Normal Equations</span></h3>
+							<dl>
+								<dt>是什么</dt>
+								<dd>$A^{\mathsf T}A\hat{\mathbf x}=A^{\mathsf T}\mathbf b$。名字里的
+								"normal" 是"法向、垂直"的意思，不是"正常"。</dd>
+								<dt>在量什么</dt>
+								<dd>把"残差垂直于每一列"这 $n$ 个条件，打包成一个方程组。</dd>
+								<dt>结构位置</dt>
+								<dd>$A^{\mathsf T}A$ 就是上一板块那个格拉姆矩阵，对称、半正定。
+								$\mathbf x^{\mathsf T}A^{\mathsf T}A\mathbf x=\lVert A\mathbf x\rVert^2$
+								——它存在的理由就是这个。</dd>
+								<dt>解不唯一意味着</dt>
+								<dd class="zero">$A$ 的列线性相关，$A^{\mathsf T}A$ 不可逆。
+								数据里有冗余的自变量，数值库会给出最小范数的那一个解。</dd>
+							</dl>
+						</div>
+
+						<div class="concept" style="border-left-color:#ef6a5e">
+							<h3>条件数　<span class="en">Condition Number</span></h3>
+							<dl>
+								<dt>是什么</dt>
+								<dd>衡量一个矩阵"接近奇异"的程度。数越大，解对输入扰动越敏感。</dd>
+								<dt>为什么要提</dt>
+								<dd>因为 $A^{\mathsf T}A$ 的条件数是 $A$ 的<strong>平方</strong>。
+								原本还算稳的问题，乘完转置之后可能就不稳了。</dd>
+								<dt>实践建议</dt>
+								<dd>别真去算 $(A^{\mathsf T}A)^{-1}$。数值库解最小二乘用的是 QR 分解或 SVD，
+								绕开显式求逆，稳定得多。NumPy 里就是 <code>np.linalg.lstsq</code>。</dd>
+								<dt>怎么察觉</dt>
+								<dd class="zero">如果拟合系数在数据轻微变动时大幅跳变，多半是这个原因，
+								不是数据的问题。舵机标定那页三阶系数跨了八个数量级，就该留意。</dd>
+							</dl>
+						</div>
+
+						<hr class="major" />
+
+						<h2>回到舵机</h2>
+
+						<p>舵机标定那一页的三阶多项式，正是这么解出来的：设计矩阵 $A$ 是 61×4，
+						每行是 $[1,\ r,\ r^2,\ r^3]$，$\mathbf b$ 是 61 个实测角度。
+						解 $A^{\mathsf T}A\hat{\mathbf c}=A^{\mathsf T}\mathbf b$，得到四个系数，贴进固件。</p>
+
+						<p>那页还做了一件这一板块该做的事——<strong>看残差</strong>。
+						拟合完不看残差，等于只知道"最好能到这么好"，却不知道"为什么不能更好"。
+						结果发现残差 0.62° 是测量噪声底的四倍，而机械回差 2.07° 又是残差的三倍多。</p>
+
+						<blockquote>最小二乘给你的是"在这个模型下最好的解"，<br />
+						不是"这个问题最好的解"。<strong>模型选错了，最小二乘会一丝不苟地给你一个最优的错误答案。</strong></blockquote>
+
+						<h3>换成神经网络会怎样</h3>
+
+						<span class="image main"><img src="images/fig5_ls_vs_nn.png" alt="最小二乘与神经网络拟合对比" /></span>
+
+						<p>同一组数据，最小二乘一步解出 <strong>0.621°</strong>，
+						小神经网络梯度下降三万轮追到 <strong>0.615°</strong>。几乎打平。</p>
+
+						<p>差别在于：当你<em>知道</em>曲线该长什么样（电位器分压特性本来就是低阶光滑的），
+						把形状写进模型远比让网络自己猜划算。网络的价值在你<em>不知道</em>形状的场合。<br />
+						展开见 → <a href="neural.html">神经网络</a></p>
+
+						<ul class="actions">
+							<li><a href="servo-calib.html" class="button">实战 · 舵机标定<br /><span class="btn-en">61 points, 4 coefficients</span></a></li>
+							<li><a href="matrix.html" class="button">回看 · 矩阵与变换<br /><span class="btn-en">Column space &amp; rank</span></a></li>
+						</ul>
+
+						<h3>完整推导</h3>
+						<p>页面上是骨架。完整版包含三个视角的逐步推导、$A^{\mathsf T}A$ 的性质证明、
+						条件数与数值稳定性、以及"为什么 $A$ 没有逆却能解出系数"的完整链条。</p>
+
+						<ul class="actions">
+							<li><a href="#" class="button primary" data-gated="assets/data/least-squares-notes.md">下载完整推导<br /><span class="btn-en">Full derivation (Markdown)</span></a></li>
+						</ul>
+
+						<!-- 友情码弹窗 -->
+						<div id="gate" class="gate" role="dialog" aria-modal="true" aria-labelledby="gateTitle" hidden>
+							<div class="gate-card">
+								<h3 id="gateTitle">请输入友情码</h3>
+								<p class="gate-en">Enter the friendship code</p>
+								<p class="gate-hint">线索：首页那句话是谁说的？填他的姓，拼音或英文都行。<br />
+								<span class="gate-en">Hint: who said the line on the homepage? His surname will do.</span></p>
+								<input type="text" id="gateInput" autocomplete="off" spellcheck="false" aria-label="友情码 friendship code" />
+								<p class="gate-err" id="gateErr" hidden>不对，再想想　Not quite — try again</p>
+								<div class="gate-actions">
+									<button type="button" class="button primary small" id="gateOk">确定　Enter</button>
+									<button type="button" class="button small" id="gateCancel">取消　Cancel</button>
+								</div>
+							</div>
+						</div>
+
+						<ul class="actions">
+							<li><a href="matrix.html" class="button">&larr; 上一板块 · 矩阵与变换<br /><span class="btn-en">Matrices</span></a></li>
+							<li><a href="neural.html" class="button primary">下一板块 · 神经网络<br /><span class="btn-en">Neural Networks</span></a></li>
+						</ul>
+
+					</div>
+				</section>
+			</div>
+
+			<footer id="footer">
+				<div class="inner">
+					<ul class="icons">
+						<li><a href="#" class="icon brands alt fa-github"><span class="label">GitHub</span></a></li>
+						<li><a href="mailto:kneadu@outlook.com" class="icon solid alt fa-envelope"><span class="label">Email</span></a></li>
+					</ul>
+					<ul class="copyright">
+						<li>&copy; 看得见的数学</li><li>Design: Baoquan Zhang</li><li>Template: <a href="https://html5up.net">HTML5 UP</a></li>
+					</ul>
+				</div>
+			</footer>
+
+		</div>
+
+		<script src="assets/js/jquery.min.js"></script>
+		<script src="assets/js/jquery.scrolly.min.js"></script>
+		<script src="assets/js/jquery.scrollex.min.js"></script>
+		<script src="assets/js/browser.min.js"></script>
+		<script src="assets/js/breakpoints.min.js"></script>
+		<script src="assets/js/util.js"></script>
+		<script src="assets/js/main.js"></script>
+
+		<script>
+		(function () {
+			/* 友情码写在下面这行，改它即可（不区分大小写）。
+			   这只是礼节性的门，不是安全措施——码在源码里能看到。 */
+			var CODE = "poincare";
+			var ALIASES = ["poincare", "庞加莱", "彭加勒", "poincaré"];
+
+			var gate = document.getElementById("gate");
+			if (!gate) return;
+			var input  = document.getElementById("gateInput");
+			var errMsg = document.getElementById("gateErr");
+			var okBtn  = document.getElementById("gateOk");
+			var cancel = document.getElementById("gateCancel");
+			var pending = null, passed = false, lastFocus = null;
+
+			function norm(v){ return (v||"").trim().toLowerCase().replace(/\s+/g,""); }
+			function accepted(v){
+				var n = norm(v);
+				if (n === norm(CODE)) return true;
+				for (var i=0;i<ALIASES.length;i++) if (n === norm(ALIASES[i])) return true;
+				return false;
+			}
+			function grab(url){
+				var a=document.createElement("a");
+				a.href=url; a.download=url.split("/").pop();
+				document.body.appendChild(a); a.click(); document.body.removeChild(a);
+			}
+			function open_(){
+				lastFocus=document.activeElement;
+				gate.hidden=false; errMsg.hidden=true; input.value="";
+				setTimeout(function(){ input.focus(); },30);
+			}
+			function close_(){
+				gate.hidden=true; pending=null;
+				if(lastFocus&&lastFocus.focus) lastFocus.focus();
+			}
+			function submit(){
+				if(accepted(input.value)){
+					passed=true; var url=pending; close_(); if(url) grab(url);
+				}else{ errMsg.hidden=false; input.select(); }
+			}
+			Array.prototype.forEach.call(document.querySelectorAll("a[data-gated]"), function(a){
+				a.addEventListener("click", function(e){
+					e.preventDefault();
+					var url=a.getAttribute("data-gated");
+					if(passed){ grab(url); return; }
+					pending=url; open_();
+				});
+			});
+			okBtn.addEventListener("click", submit);
+			cancel.addEventListener("click", close_);
+			input.addEventListener("keydown", function(e){
+				if(e.key==="Enter"){ e.preventDefault(); submit(); }
+			});
+			document.addEventListener("keydown", function(e){
+				if(e.key==="Escape" && !gate.hidden) close_();
+			});
+			gate.addEventListener("click", function(e){ if(e.target===gate) close_(); });
+		})();
+		</script>
+
+	</body>
+</html>
