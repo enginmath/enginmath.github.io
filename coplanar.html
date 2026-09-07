@@ -1,0 +1,461 @@
+<!DOCTYPE HTML>
+<!--
+	Forty by HTML5 UP
+	html5up.net | @ajlkn
+	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+-->
+<html lang="zh-CN">
+	<head>
+		<title>从"四点共面"走进线性代数 · 看得见的数学</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+		<meta name="description" content="高中的共线、共面、空间向量基本定理，换成大学的语言就是秩为 1、2、3。一道具体的题，走完整条路。" />
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<style>
+			.btn-en { font-size: 0.78em; opacity: 0.72; letter-spacing: 0.02em; }
+			.eqbox {
+				background: #16223a; color: #e6ecf5;
+				border-left: 3px solid #b388ff; border-radius: 3px;
+				padding: 1.2rem 1.5rem; margin: 1.6rem 0; overflow-x: auto;
+				font-size: 0.95em; line-height: 2;
+			}
+			.eqbox .lbl { color: #93a4c0; font-size: 0.85em; }
+			.eqbox strong { color: #f7c579; }
+			/* 讲义插图：浅底细线，与板块页的深色图有意区分 */
+			.plate { margin: 1.8rem 0; }
+			.plate img {
+				display: block; width: 100%; border: 1px solid #e2e5ea; border-radius: 4px;
+				background: #fff;
+			}
+			.plate figcaption {
+				font-size: 0.85em; color: #7f8790; margin-top: 0.6rem; text-align: center;
+			}
+			.term { color: #1f6f5c; font-weight: 600; }
+			.ladder { border-left: 4px solid #f0a63c; padding: 0.2rem 0 0.2rem 1.4rem; margin: 2rem 0; }
+			.ladder h3 { margin: 0 0 0.4rem; font-size: 1.05em; }
+			.ladder p { margin: 0; }
+			.gate {
+				position: fixed; inset: 0; z-index: 10000;
+				display: flex; align-items: center; justify-content: center; padding: 1.5rem;
+				background: rgba(13, 22, 38, 0.55);
+				backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+			}
+			.gate[hidden] { display: none; }
+			.gate-card {
+				background: #16223a; color: #e6ecf5; border: 1px solid #2a3c5e; border-radius: 5px;
+				padding: 2.1rem 2.25rem 1.8rem; max-width: 27rem; width: 100%;
+				box-shadow: 0 1.4rem 3.5rem rgba(0,0,0,.45); text-align: center;
+			}
+			.gate-card h3 { margin: 0 0 0.3rem; color: #f7c579; font-size: 1.15em; }
+			.gate-en { opacity: 0.55; font-size: 0.85em; margin: 0 0 0.4rem; }
+			.gate-hint { font-size: 0.85em; color: #93a4c0; margin: 0.9rem 0 1.3rem; line-height: 1.8; }
+			.gate-card input[type="text"] {
+				background: #0d1626; border: 1px solid #2a3c5e; color: #e6ecf5; border-radius: 3px;
+				text-align: center; font-size: 1.15em; letter-spacing: 0.08em; margin-bottom: 0.8rem;
+			}
+			.gate-card input[type="text"]:focus { border-color: #b388ff; box-shadow: none; }
+			.gate-err { color: #ef6a5e; font-size: 0.85em; margin: 0 0 0.8rem; }
+			.gate-err[hidden] { display: none; }
+			.gate-actions { display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap; }
+			.gate-actions .button { margin: 0; }
+			.gate-actions .button:not(.primary) { color: #93a4c0; box-shadow: inset 0 0 0 1px #2a3c5e; }
+		</style>
+		<script>
+			window.MathJax = {
+				tex: { inlineMath: [['$','$']], displayMath: [['$$','$$']] },
+				options: { skipHtmlTags: ['script','noscript','style','textarea','pre','code'] }
+			};
+		</script>
+		<script id="MathJax-script" async
+			src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.min.js"></script>
+		<noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
+	</head>
+	<body class="is-preload">
+
+		<div id="wrapper">
+
+			<header id="header">
+				<a href="index.html" class="logo"><strong>看得见的数学</strong> <span>by BAOQUAN</span></a>
+				<nav><a href="#menu">Menu</a></nav>
+			</header>
+
+			<nav id="menu">
+				<ul class="links">
+					<li><a href="index.html">首页 &nbsp;Home</a></li>
+					<li><a href="vectors.html">向量与空间 &nbsp;Vectors</a></li>
+					<li><a href="matrix.html">矩阵与变换 &nbsp;Matrices</a></li>
+					<li><a href="calculus.html">变化与梯度 &nbsp;Calculus</a></li>
+					<li><a href="fitting.html">拟合与最小二乘 &nbsp;Least Squares</a></li>
+					<li><a href="neural.html">神经网络 &nbsp;Neural Networks</a></li>
+					<li><a href="fractals.html">分形与维数 &nbsp;Fractals</a></li>
+					<li><a href="solar-tracker.html">实战 · 开机那一下</a></li>
+					<li><a href="servo-calib.html">实战 · 舵机标定</a></li>
+				</ul>
+			</nav>
+
+			<div id="main" class="alt">
+				<section id="one">
+					<div class="inner">
+
+						<header class="major">
+							<h1>从"四点共面"走进线性代数</h1>
+							<p>一道高中题，一路走到秩、张成与行列式<br />
+							主线例题：判断 $A(6,0,0)$、$B(4,1,1)$、$C(0,0,6)$、$D(2,2,2)$ 是否共面</p>
+						</header>
+
+						<div class="eqbox" style="border-left-color:#f0a63c">
+							<span class="lbl">这一页在做什么</span><br />
+							<a href="vectors.html" style="color:#8fe3ed">向量与空间</a> 讲了点积叉积行列式，
+							<a href="matrix.html" style="color:#8fe3ed">矩阵与变换</a> 讲了秩和四个空间。<br />
+							<strong>中间那道坎——高中说的"共面"到底对应大学的什么——这一页来接。</strong>
+						</div>
+
+						<h2>先回答一个问题：这算线性代数吗</h2>
+
+						<p>算，而且是最核心的那一块。你在高中学的"空间向量"，本质上就是线性代数在 $n=3$ 时的具体版本。
+						教材为了照顾直观用了一套几何化的说法，大学换一套抽象术语，讲的是同一件事。</p>
+
+						<div class="table-wrapper">
+							<table class="alt">
+								<thead>
+									<tr><th>高中的说法</th><th>线性代数的说法</th><th>本质</th></tr>
+								</thead>
+								<tbody>
+									<tr>
+										<td>$\vec b=\lambda\vec a$，两向量共线</td>
+										<td>$\vec a,\vec b$ <strong>线性相关</strong></td>
+										<td>秩为 1</td>
+									</tr>
+									<tr>
+										<td>$\vec p=x\vec a+y\vec b$，三向量共面</td>
+										<td>$\vec p$ 在 $\vec a,\vec b$ <strong>张成的子空间</strong>里</td>
+										<td>秩为 2</td>
+									</tr>
+									<tr>
+										<td>空间向量基本定理</td>
+										<td>$\{\vec a,\vec b,\vec c\}$ 构成 $\mathbb R^3$ 的一组<strong>基</strong></td>
+										<td>秩为 3</td>
+									</tr>
+									<tr>
+										<td>$x\vec a+y\vec b+z\vec c$</td>
+										<td><strong>线性组合</strong></td>
+										<td>—</td>
+									</tr>
+									<tr>
+										<td>判断共面（凑系数）</td>
+										<td>算<strong>行列式</strong>是否为 0 / 求<strong>秩</strong></td>
+										<td>同一判据</td>
+									</tr>
+									<tr>
+										<td>数量积 $\vec a\cdot\vec b$</td>
+										<td><strong>内积</strong>，可写成 $\mathbf a^{\mathsf T}\mathbf b$</td>
+										<td>—</td>
+									</tr>
+									<tr>
+										<td>法向量 $\vec n$</td>
+										<td>平面的<strong>正交补</strong></td>
+										<td>—</td>
+									</tr>
+								</tbody>
+							</table>
+						</div>
+
+						<blockquote>线性代数不是新知识，<strong>是把你已经会的东西换成可以推广到 $n$ 维的语言。</strong></blockquote>
+
+						<p>所以这道题用大学的话说就是：<em>判断三个向量的秩是否小于 3</em>。
+						高中不教"秩"和"行列式"，只能靠手工凑系数——这就是为什么同一道题高中做起来绕，大学做起来一行。</p>
+
+						<hr class="major" />
+
+						<h2>起点：线性组合能扫出什么</h2>
+
+						<p>给定几个向量，各乘一个数再加起来，得到的新向量叫<span class="term">线性组合</span>：</p>
+
+						<div class="eqbox" style="text-align:center">
+							$\vec p=x\vec a+y\vec b+z\vec c$
+						</div>
+
+						<p>系数可以取任意实数。整个线性代数说到底就在研究一件事：
+						<strong>固定几个向量，让系数跑遍所有实数，能"扫"出什么形状？</strong></p>
+
+						<figure class="plate">
+							<img src="images/cop01.png" alt="秩为1、2、3时扫出直线、平面、整个空间" />
+							<figcaption>同样是把向量按系数加起来，向量个数不同，扫出的形状就不同。</figcaption>
+						</figure>
+
+						<p>扫出来的东西叫<span class="term">张成空间</span>（span），它的维数就是这组向量的<span class="term">秩</span>。
+						于是三个几何概念被统一了：</p>
+
+						<div class="eqbox">
+							<span class="lbl">同一件事的三种说法</span><br />
+							秩 = 1　→　扫出直线　→　这些向量<strong>共线</strong><br />
+							秩 = 2　→　扫出平面　→　这些向量<strong>共面</strong><br />
+							秩 = 3　→　扫出整个空间　→　<strong>不共面</strong>，构成一组基
+						</div>
+
+						<p><strong>共面问题就是秩的问题。</strong>这是全篇第一个关键句。</p>
+
+						<figure class="plate">
+							<img src="images/cop02.png" alt="共线：所有点串在同一条直线上" />
+							<figcaption>一维情形：$\vec b=\lambda\vec a$，让 $\lambda$ 跑遍实数，扫出一条过原点的直线。</figcaption>
+						</figure>
+
+						<figure class="plate">
+							<img src="images/cop03.png" alt="平面上每个点对应唯一一组坐标" />
+							<figcaption>二维情形：两个不共线的向量张成一张平面，平面上每个点都有唯一一组坐标 $(x,y)$。</figcaption>
+						</figure>
+
+						<hr class="major" />
+
+						<h2>为什么会冒出"系数和 = 1"</h2>
+
+						<p>判断四点共面时，课本常常要求系数满足 $x+y+z=1$。这个条件从哪来？</p>
+
+						<figure class="plate">
+							<img src="images/cop04.png" alt="系数任意扫满整个空间，限定和为1才切出那张平面" />
+							<figcaption>左：系数任意，扫满整个空间。右：加上"系数和 = 1"，才切出经过 A、B、C 的那张平面。</figcaption>
+						</figure>
+
+						<div class="ladder">
+							<h3>区别在于过不过原点</h3>
+							<p>$x\vec a+y\vec b+z\vec c$ 系数任意时，扫出的是<strong>过原点</strong>的整个空间（或子空间）。
+							但四点共面问的是"D 在不在 A、B、C 决定的那张平面上"——那张平面<strong>一般不过原点</strong>。</p>
+						</div>
+
+						<p>补上 $x+y+z=1$，组合就从<span class="term">线性组合</span>变成了<span class="term">仿射组合</span>：
+						它扫出的不再是过原点的子空间，而是恰好穿过那三个点的平面。
+						<strong>那个"1"，就是把子空间平移到位的通行证。</strong></p>
+
+						<p>这和拟合板块里"通解 = 特解 + 齐次解"是同一个结构：
+						齐次解负责在平面里滑动，特解负责把整张平面挪到该在的位置。</p>
+
+						<hr class="major" />
+
+						<h2>换条路：用坐标和法向量</h2>
+
+						<p>除了凑系数，还可以正面写出那张平面的方程。</p>
+
+						<figure class="plate">
+							<img src="images/cop05.png" alt="法向量与平面内向量垂直，点积为零" />
+							<figcaption>点 $P$ 在平面上 $\iff$ $\overrightarrow{P_0P}$ 躺在平面里 $\iff$ $\vec n\cdot\overrightarrow{P_0P}=0$。</figcaption>
+						</figure>
+
+						<p>法向量垂直于平面内<em>任何</em>向量，而两个非零向量垂直的充要条件是点积为零。展开就得到一般式：</p>
+
+						<div class="eqbox" style="text-align:center;border-left-color:#6ed6a0">
+							$A(x-x_0)+B(y-y_0)+C(z-z_0)=0
+							\quad\Longrightarrow\quad
+							Ax+By+Cz+D=0$
+						</div>
+
+						<div class="ladder" style="border-left-color:#6ed6a0">
+							<h3>顺带回答：为什么它的解一定构成一张平面</h3>
+							<p>三维空间有 3 个自由度，一个线性约束消掉 1 个，剩下 2 个——几何上正好是一张二维曲面。
+							又因为方程是一次的、没有弯曲项，这张曲面就是平的。<strong>所以是平面，不是曲面。</strong></p>
+						</div>
+
+						<figure class="plate">
+							<img src="images/cop06.png" alt="例题中 A、B、C 决定的平面 x+y+z=6" />
+							<figcaption>回到本题：$A$、$B$、$C$ 决定的平面是 $x+y+z=6$。把 $D(2,2,2)$ 代进去，$2+2+2=6$ ✓ 共面。</figcaption>
+						</figure>
+
+						<hr class="major" />
+
+						<h2>第三条路：行列式</h2>
+
+						<p>最省事的做法，是把"共面"直接变成一次计算。</p>
+
+						<figure class="plate">
+							<img src="images/cop07.png" alt="不共面时有体积，共面时被压扁体积为零" />
+							<figcaption>三个向量张成的平行六面体：不共面时有体积；共面时被压扁，体积为零。</figcaption>
+						</figure>
+
+						<div class="eqbox" style="text-align:center;border-left-color:#f0a63c">
+							三向量共面　$\iff$　平行六面体被压扁　$\iff$　$\det=0$　$\iff$　秩 $<3$
+						</div>
+
+						<figure class="plate">
+							<img src="images/cop08.png" alt="三阶行列式的对角线法则" />
+							<figcaption>三阶行列式的对角线法则（萨鲁斯法则）。注意：<strong>只对三阶有效</strong>，四阶必须按行展开。</figcaption>
+						</figure>
+
+						<p>行列式的绝对值就是相应维度下的"体积"：二阶是面积，三阶是体积，四阶是四维超体积。
+						更高阶不能用对角线法则，要按行展开降阶——$4\times4$ 拆成 4 个 $3\times3$，再拆成 $2\times2$。<br />
+						展开见 → <a href="vectors.html">向量与空间</a></p>
+
+						<hr class="major" />
+
+						<h2>三种解法，一道题</h2>
+
+						<div class="table-wrapper">
+							<table class="alt">
+								<thead>
+									<tr><th>解法</th><th>怎么做</th><th>适合谁</th></tr>
+								</thead>
+								<tbody>
+									<tr>
+										<td><strong>观察法</strong></td>
+										<td>凑系数：找 $x,y,z$ 使 $\overrightarrow{AD}=x\overrightarrow{AB}+y\overrightarrow{AC}$</td>
+										<td>高中，最快，但要靠眼力</td>
+									</tr>
+									<tr>
+										<td><strong>坐标代入法</strong></td>
+										<td>先求平面方程，再把第四点代进去验</td>
+										<td>稳妥，步骤明确，不用碰运气</td>
+									</tr>
+									<tr>
+										<td><strong>行列式法</strong></td>
+										<td>三个向量排成矩阵，算 $\det$ 是否为 0</td>
+										<td>大学标准做法，一行出结果</td>
+									</tr>
+								</tbody>
+							</table>
+						</div>
+
+						<p>三种解法不是三件事——<strong>它们是同一个判据的三种写法</strong>。
+						凑得出系数 $\iff$ 落在张成空间里 $\iff$ 秩小于 3 $\iff$ 行列式为零。
+						高中做题选第一种是因为工具有限，不是因为它更本质。</p>
+
+						<hr class="major" />
+
+						<h2>术语速查</h2>
+
+						<div class="table-wrapper">
+							<table class="alt">
+								<thead><tr><th>术语</th><th>一句话</th><th>在这道题里</th></tr></thead>
+								<tbody>
+									<tr><td>线性组合</td><td>各乘一个数再加起来</td><td>$x\overrightarrow{AB}+y\overrightarrow{AC}$</td></tr>
+									<tr><td>张成空间 span</td><td>所有线性组合扫出的形状</td><td>$A,B,C$ 决定的那张平面</td></tr>
+									<tr><td>秩 rank</td><td>张成空间的维数</td><td>本题是 2，所以共面</td></tr>
+									<tr><td>线性相关</td><td>有一个向量是多余的</td><td>$\overrightarrow{AD}$ 能被另两个表示</td></tr>
+									<tr><td>基 basis</td><td>不多不少、刚好撑满的一组向量</td><td>本题三向量不构成基</td></tr>
+									<tr><td>仿射组合</td><td>系数和为 1 的线性组合</td><td>把子空间平移到不过原点的位置</td></tr>
+									<tr><td>正交补</td><td>与整个子空间垂直的那些方向</td><td>平面的法向量 $\vec n$</td></tr>
+								</tbody>
+							</table>
+						</div>
+
+						<hr class="major" />
+
+						<h2>往前一步</h2>
+
+						<p>这道题走完，你其实已经用过了矩阵板块的全部核心词：张成、秩、线性相关、基。
+						下一步只是把它们从"三个向量"推广到"任意多个向量、任意维空间"——
+						名字不变，图景不变，只是数字从 3 换成 $n$。</p>
+
+						<ul class="actions">
+							<li><a href="vectors.html" class="button">向量与空间<br /><span class="btn-en">Dot, cross, determinant</span></a></li>
+							<li><a href="matrix.html" class="button primary">矩阵与变换<br /><span class="btn-en">Rank &amp; four subspaces</span></a></li>
+						</ul>
+
+						<h3>完整讲义</h3>
+						<p>页面上是主线。完整版含逐步推导、三种解法的完整演算、练习与答案，
+						八张配图全部内嵌，Markdown 格式，可直接打开或打印。</p>
+
+						<ul class="actions">
+							<li><a href="#" class="button primary" data-gated="assets/data/coplanar-notes.md">下载完整讲义<br /><span class="btn-en">Full notes (Markdown)</span></a></li>
+						</ul>
+
+						<!-- 友情码弹窗 -->
+						<div id="gate" class="gate" role="dialog" aria-modal="true" aria-labelledby="gateTitle" hidden>
+							<div class="gate-card">
+								<h3 id="gateTitle">请输入友情码</h3>
+								<p class="gate-en">Enter the friendship code</p>
+								<p class="gate-hint">线索：首页那句话是谁说的？填他的姓，拼音或英文都行。<br />
+								<span class="gate-en">Hint: who said the line on the homepage? His surname will do.</span></p>
+								<input type="text" id="gateInput" autocomplete="off" spellcheck="false" aria-label="友情码 friendship code" />
+								<p class="gate-err" id="gateErr" hidden>不对，再想想　Not quite — try again</p>
+								<div class="gate-actions">
+									<button type="button" class="button primary small" id="gateOk">确定　Enter</button>
+									<button type="button" class="button small" id="gateCancel">取消　Cancel</button>
+								</div>
+							</div>
+						</div>
+
+					</div>
+				</section>
+			</div>
+
+			<footer id="footer">
+				<div class="inner">
+					<ul class="icons">
+						<li><a href="#" class="icon brands alt fa-github"><span class="label">GitHub</span></a></li>
+						<li><a href="mailto:kneadu@outlook.com" class="icon solid alt fa-envelope"><span class="label">Email</span></a></li>
+					</ul>
+					<ul class="copyright">
+						<li>&copy; 看得见的数学</li><li>Design: Baoquan Zhang</li><li>Template: <a href="https://html5up.net">HTML5 UP</a></li>
+					</ul>
+				</div>
+			</footer>
+
+		</div>
+
+		<script src="assets/js/jquery.min.js"></script>
+		<script src="assets/js/jquery.scrolly.min.js"></script>
+		<script src="assets/js/jquery.scrollex.min.js"></script>
+		<script src="assets/js/browser.min.js"></script>
+		<script src="assets/js/breakpoints.min.js"></script>
+		<script src="assets/js/util.js"></script>
+		<script src="assets/js/main.js"></script>
+
+		<script>
+		(function () {
+			/* 友情码写在下面这行，改它即可（不区分大小写）。
+			   这只是礼节性的门，不是安全措施——码在源码里能看到。 */
+			var CODE = "poincare";
+			var ALIASES = ["poincare", "庞加莱", "彭加勒", "poincaré"];
+			var gate = document.getElementById("gate");
+			if (!gate) return;
+			var input  = document.getElementById("gateInput");
+			var errMsg = document.getElementById("gateErr");
+			var okBtn  = document.getElementById("gateOk");
+			var cancel = document.getElementById("gateCancel");
+			var pending = null, passed = false, lastFocus = null;
+			function norm(v){ return (v||"").trim().toLowerCase().replace(/\s+/g,""); }
+			function accepted(v){
+				var n = norm(v);
+				if (n === norm(CODE)) return true;
+				for (var i=0;i<ALIASES.length;i++) if (n === norm(ALIASES[i])) return true;
+				return false;
+			}
+			function grab(url){
+				var a=document.createElement("a");
+				a.href=url; a.download=url.split("/").pop();
+				document.body.appendChild(a); a.click(); document.body.removeChild(a);
+			}
+			function open_(){
+				lastFocus=document.activeElement;
+				gate.hidden=false; errMsg.hidden=true; input.value="";
+				setTimeout(function(){ input.focus(); },30);
+			}
+			function close_(){
+				gate.hidden=true; pending=null;
+				if(lastFocus&&lastFocus.focus) lastFocus.focus();
+			}
+			function submit(){
+				if(accepted(input.value)){
+					passed=true; var url=pending; close_(); if(url) grab(url);
+				}else{ errMsg.hidden=false; input.select(); }
+			}
+			Array.prototype.forEach.call(document.querySelectorAll("a[data-gated]"), function(a){
+				a.addEventListener("click", function(e){
+					e.preventDefault();
+					var url=a.getAttribute("data-gated");
+					if(passed){ grab(url); return; }
+					pending=url; open_();
+				});
+			});
+			okBtn.addEventListener("click", submit);
+			cancel.addEventListener("click", close_);
+			input.addEventListener("keydown", function(e){
+				if(e.key==="Enter"){ e.preventDefault(); submit(); }
+			});
+			document.addEventListener("keydown", function(e){
+				if(e.key==="Escape" && !gate.hidden) close_();
+			});
+			gate.addEventListener("click", function(e){ if(e.target===gate) close_(); });
+		})();
+		</script>
+
+	</body>
+</html>
