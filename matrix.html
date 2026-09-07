@@ -52,6 +52,31 @@
 			.ladder { border-left: 4px solid #f0a63c; padding: 0.2rem 0 0.2rem 1.4rem; margin: 2rem 0; }
 			.ladder h3 { margin: 0 0 0.4rem; font-size: 1.05em; }
 			.ladder p { margin: 0; }
+			.gate {
+				position: fixed; inset: 0; z-index: 10000;
+				display: flex; align-items: center; justify-content: center; padding: 1.5rem;
+				background: rgba(13, 22, 38, 0.55);
+				backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+			}
+			.gate[hidden] { display: none; }
+			.gate-card {
+				background: #16223a; color: #e6ecf5; border: 1px solid #2a3c5e; border-radius: 5px;
+				padding: 2.1rem 2.25rem 1.8rem; max-width: 27rem; width: 100%;
+				box-shadow: 0 1.4rem 3.5rem rgba(0,0,0,.45); text-align: center;
+			}
+			.gate-card h3 { margin: 0 0 0.3rem; color: #f7c579; font-size: 1.15em; }
+			.gate-en { opacity: 0.55; font-size: 0.85em; margin: 0 0 0.4rem; }
+			.gate-hint { font-size: 0.85em; color: #93a4c0; margin: 0.9rem 0 1.3rem; line-height: 1.8; }
+			.gate-card input[type="text"] {
+				background: #0d1626; border: 1px solid #2a3c5e; color: #e6ecf5; border-radius: 3px;
+				text-align: center; font-size: 1.15em; letter-spacing: 0.08em; margin-bottom: 0.8rem;
+			}
+			.gate-card input[type="text"]:focus { border-color: #b388ff; box-shadow: none; }
+			.gate-err { color: #ef6a5e; font-size: 0.85em; margin: 0 0 0.8rem; }
+			.gate-err[hidden] { display: none; }
+			.gate-actions { display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap; }
+			.gate-actions .button { margin: 0; }
+			.gate-actions .button:not(.primary) { color: #93a4c0; box-shadow: inset 0 0 0 1px #2a3c5e; }
 		</style>
 		<script>
 			window.MathJax = {
@@ -102,10 +127,22 @@
 							<strong>那些"维数"在这里会各自长出一个几何形状。</strong>
 						</div>
 
+						<h2>先认清它是什么</h2>
+
+						<p>矩阵不是向量，也不是一堆散数。它是<strong>一叠列向量摞在一起</strong>。</p>
+
+						<span class="image main"><img src="images/photo_toast.jpg" alt="用一条吐司类比矩阵、列向量、列空间与秩" /></span>
+
+						<p>整条吐司是矩阵 $A$。竖着切一刀得到一片，那是一个<strong>列向量</strong>。
+						这些片能张成的空间就是<strong>列空间</strong>，
+						而<strong>真正独立的片数就是秩</strong>——两片一模一样的话，它俩只算一片。</p>
+
+						<hr class="major" />
+
 						<h2>一条主线：撑开与塌陷</h2>
 
-						<p>矩阵 $A$ 乘以向量 $\mathbf x$，最容易被当成"按行点乘"的机械运算。
-						但换个读法，整件事会立刻变清楚：<strong>竖着读。</strong></p>
+						<p>认清了形状，再看运算。矩阵 $A$ 乘以向量 $\mathbf x$，
+						最容易被当成"按行点乘"的机械操作。但换个读法，整件事会立刻变清楚：<strong>竖着读。</strong></p>
 
 						<div class="eqbox">
 							<span class="lbl">Ax 的真身</span><br />
@@ -252,6 +289,55 @@
 
 						<hr class="major" />
 
+						<h2>四个空间，一个数字</h2>
+
+						<p>把方程组的四个空间摆在一起看，会发现它们不是四件事——
+						<strong>四个维数全由秩 $r$ 一个数决定</strong>：$r,\ n-r,\ r,\ m-r$。</p>
+
+						<span class="image main"><img src="images/mat_four_spaces.png" alt="四大空间的维数由秩决定" /></span>
+
+						<p>左边那组三行互不成比例，秩满，两个零空间都只剩原点。
+						右边只改了一件事——把第 2 行换成第 1 行的两倍——秩掉到 2，
+						于是行空间和列空间各瘦一维，两个零空间各胖一维。<strong>加起来的总数一点没变。</strong></p>
+
+						<div class="eqbox">
+							<span class="lbl">两对正交直和</span><br />
+							$\mathbb{R}^n=C(A^{\mathsf T})\oplus N(A)$
+							　　　　$\mathbb{R}^m=C(A)\oplus N(A^{\mathsf T})$<br />
+							<br />
+							出发的空间被劈成两半：一半是解的来处，一半是解滑动的方向。<br />
+							到达的空间也被劈成两半：一半够得着，一半永远够不着。
+						</div>
+
+						<blockquote>线性相关不是计算事故，是<strong>独立方向变少了</strong>。<br />
+						秩一降，四个空间同时改变形状。</blockquote>
+
+						<p>用三张具体的平面把这件事走一遍，比记定义管用得多——
+						两行成比例且右边对得上，是同一张平面；成比例但右边对不上，是两张平行面永不相交；
+						不成比例，才是两张真正交叉的平面。</p>
+
+						<ul class="actions">
+							<li><a href="#" class="button primary" data-gated="assets/data/four-spaces-notes.md">下载 · 从三张平面讲透线性代数<br /><span class="btn-en">Four subspaces, worked through</span></a></li>
+						</ul>
+
+						<!-- 友情码弹窗 -->
+						<div id="gate" class="gate" role="dialog" aria-modal="true" aria-labelledby="gateTitle" hidden>
+							<div class="gate-card">
+								<h3 id="gateTitle">请输入友情码</h3>
+								<p class="gate-en">Enter the friendship code</p>
+								<p class="gate-hint">线索：首页那句话是谁说的？填他的姓，拼音或英文都行。<br />
+								<span class="gate-en">Hint: who said the line on the homepage? His surname will do.</span></p>
+								<input type="text" id="gateInput" autocomplete="off" spellcheck="false" aria-label="友情码 friendship code" />
+								<p class="gate-err" id="gateErr" hidden>不对，再想想　Not quite — try again</p>
+								<div class="gate-actions">
+									<button type="button" class="button primary small" id="gateOk">确定　Enter</button>
+									<button type="button" class="button small" id="gateCancel">取消　Cancel</button>
+								</div>
+							</div>
+						</div>
+
+						<hr class="major" />
+
 						<h2>回头看那些实战</h2>
 
 						<p>舵机标定那页拟合三阶多项式，本质就是在解一个超定的 $A\mathbf x=\mathbf b$：
@@ -296,6 +382,65 @@
 		<script src="assets/js/breakpoints.min.js"></script>
 		<script src="assets/js/util.js"></script>
 		<script src="assets/js/main.js"></script>
+
+		<script>
+		(function () {
+			/* 友情码写在下面这行，改它即可（不区分大小写）。
+			   这只是礼节性的门，不是安全措施——码在源码里能看到。 */
+			var CODE = "poincare";
+			var ALIASES = ["poincare", "庞加莱", "彭加勒", "poincaré"];
+			var gate = document.getElementById("gate");
+			if (!gate) return;
+			var input  = document.getElementById("gateInput");
+			var errMsg = document.getElementById("gateErr");
+			var okBtn  = document.getElementById("gateOk");
+			var cancel = document.getElementById("gateCancel");
+			var pending = null, passed = false, lastFocus = null;
+			function norm(v){ return (v||"").trim().toLowerCase().replace(/\s+/g,""); }
+			function accepted(v){
+				var n = norm(v);
+				if (n === norm(CODE)) return true;
+				for (var i=0;i<ALIASES.length;i++) if (n === norm(ALIASES[i])) return true;
+				return false;
+			}
+			function grab(url){
+				var a=document.createElement("a");
+				a.href=url; a.download=url.split("/").pop();
+				document.body.appendChild(a); a.click(); document.body.removeChild(a);
+			}
+			function open_(){
+				lastFocus=document.activeElement;
+				gate.hidden=false; errMsg.hidden=true; input.value="";
+				setTimeout(function(){ input.focus(); },30);
+			}
+			function close_(){
+				gate.hidden=true; pending=null;
+				if(lastFocus&&lastFocus.focus) lastFocus.focus();
+			}
+			function submit(){
+				if(accepted(input.value)){
+					passed=true; var url=pending; close_(); if(url) grab(url);
+				}else{ errMsg.hidden=false; input.select(); }
+			}
+			Array.prototype.forEach.call(document.querySelectorAll("a[data-gated]"), function(a){
+				a.addEventListener("click", function(e){
+					e.preventDefault();
+					var url=a.getAttribute("data-gated");
+					if(passed){ grab(url); return; }
+					pending=url; open_();
+				});
+			});
+			okBtn.addEventListener("click", submit);
+			cancel.addEventListener("click", close_);
+			input.addEventListener("keydown", function(e){
+				if(e.key==="Enter"){ e.preventDefault(); submit(); }
+			});
+			document.addEventListener("keydown", function(e){
+				if(e.key==="Escape" && !gate.hidden) close_();
+			});
+			gate.addEventListener("click", function(e){ if(e.target===gate) close_(); });
+		})();
+		</script>
 
 	</body>
 </html>
