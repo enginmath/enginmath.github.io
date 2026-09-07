@@ -1,0 +1,339 @@
+<!DOCTYPE HTML>
+<!--
+	Forty by HTML5 UP
+	html5up.net | @ajlkn
+	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+-->
+<html lang="zh-CN">
+	<head>
+		<title>神经网络 · 看得见的数学</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+		<meta name="description" content="一层矩阵，一次弯折，反复堆叠。反向传播就是链式法则从右往左算一遍。" />
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<style>
+			.btn-en { font-size: 0.78em; opacity: 0.72; letter-spacing: 0.02em; }
+			.eqbox {
+				background: #16223a; color: #e6ecf5;
+				border-left: 3px solid #b388ff; border-radius: 3px;
+				padding: 1.2rem 1.5rem; margin: 1.6rem 0; overflow-x: auto;
+				font-size: 0.95em; line-height: 2;
+			}
+			.eqbox .lbl { color: #93a4c0; font-size: 0.85em; }
+			.eqbox strong { color: #f7c579; }
+			.concept {
+				border: 1px solid #dfe3e8; border-left: 4px solid #b388ff;
+				border-radius: 4px; padding: 1.4rem 1.6rem 0.9rem; margin: 1.8rem 0;
+			}
+			.concept h3 { margin: 0 0 1rem; }
+			.concept h3 .en { font-size: 0.62em; opacity: 0.5; font-weight: 400; letter-spacing: 0.04em; }
+			.concept dl { margin: 0; }
+			.concept dt {
+				font-size: 0.72em; letter-spacing: 0.15em; text-transform: uppercase;
+				color: #8a94a6; margin-top: 0.9rem; font-weight: 600;
+			}
+			.concept dd { margin: 0.15rem 0 0; line-height: 1.75; }
+			.concept .zero { color: #c0392b; }
+			.demos { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.2rem; margin: 2rem 0; }
+			.demo {
+				display: block; text-decoration: none; border-radius: 4px;
+				padding: 1.4rem 1.5rem 1.5rem; color: #e6ecf5;
+				background: linear-gradient(160deg, #1b2b47 0%, #0f1826 100%);
+				border: 1px solid #2a3c5e; transition: transform .18s ease, border-color .18s ease;
+			}
+			.demo:hover { transform: translateY(-3px); border-color: #b388ff; }
+			.demo .tag {
+				font-size: 0.7em; letter-spacing: 0.14em; text-transform: uppercase;
+				color: #f0a63c; display: block; margin-bottom: 0.5rem;
+			}
+			.demo strong { display: block; font-size: 1.12em; color: #fff; margin-bottom: 0.45rem; }
+			.demo span.d { display: block; font-size: 0.86em; color: #93a4c0; line-height: 1.7; }
+			.demo .go { display: block; margin-top: 0.9rem; font-size: 0.82em; color: #8fe3ed; }
+			.ladder { border-left: 4px solid #f0a63c; padding: 0.2rem 0 0.2rem 1.4rem; margin: 2rem 0; }
+			.ladder h3 { margin: 0 0 0.4rem; font-size: 1.05em; }
+			.ladder p { margin: 0; }
+			pre code { font-size: 0.86em; }
+		</style>
+		<script>
+			window.MathJax = {
+				tex: { inlineMath: [['$','$']], displayMath: [['$$','$$']] },
+				options: { skipHtmlTags: ['script','noscript','style','textarea','pre','code'] }
+			};
+		</script>
+		<script id="MathJax-script" async
+			src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.min.js"></script>
+		<noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
+	</head>
+	<body class="is-preload">
+
+		<div id="wrapper">
+
+			<header id="header">
+				<a href="index.html" class="logo"><strong>看得见的数学</strong> <span>by BAOQUAN</span></a>
+				<nav><a href="#menu">Menu</a></nav>
+			</header>
+
+			<nav id="menu">
+				<ul class="links">
+					<li><a href="index.html">首页 &nbsp;Home</a></li>
+					<li><a href="vectors.html">向量与空间 &nbsp;Vectors</a></li>
+					<li><a href="matrix.html">矩阵与变换 &nbsp;Matrices</a></li>
+					<li><a href="calculus.html">变化与梯度 &nbsp;Calculus</a></li>
+					<li><a href="fitting.html">拟合与最小二乘 &nbsp;Least Squares</a></li>
+					<li><a href="neural.html">神经网络 &nbsp;Neural Networks</a></li>
+					<li><a href="fractals.html">分形与维数 &nbsp;Fractals</a></li>
+					<li><a href="solar-tracker.html">实战 · 开机那一下</a></li>
+					<li><a href="servo-calib.html">实战 · 舵机标定</a></li>
+				</ul>
+			</nav>
+
+			<div id="main" class="alt">
+				<section id="one">
+					<div class="inner">
+
+						<header class="major">
+							<h1>神经网络</h1>
+							<p>Neural Networks<br />
+							一层矩阵，一次弯折，反复堆叠。<br />
+							前面五个板块的东西，在这里同时上场。</p>
+						</header>
+
+						<div class="eqbox" style="border-left-color:#f0a63c">
+							<span class="lbl">这一页需要的全部前置</span><br />
+							矩阵是<strong>一次线性变换</strong>（<a href="matrix.html" style="color:#8fe3ed">矩阵与变换</a>）<br />
+							损失最小化靠<strong>令导数为零</strong>或<strong>沿负梯度走</strong>（<a href="calculus.html" style="color:#8fe3ed">变化与梯度</a>）<br />
+							拟合是在<strong>够得着的范围里找最近的点</strong>（<a href="fitting.html" style="color:#8fe3ed">拟合与最小二乘</a>）<br />
+							<br />
+							<strong>神经网络没有引入新数学，它只是把这三样反复叠加。</strong>
+						</div>
+
+						<h2>一层在做什么</h2>
+
+						<p>去掉所有比喻，一层神经网络就两步：</p>
+
+						<div class="eqbox" style="text-align:center">
+							$z=xW+b\qquad\longrightarrow\qquad h=\sigma(z)$
+							<br /><span class="lbl">先做一次仿射变换，再逐元素弯一下</span>
+						</div>
+
+						<p>第一步是矩阵板块讲过的东西：$W$ 把输入送到别处，$b$ 平移。
+						第二步 $\sigma$ 是<strong>激活函数</strong>，比如 $\tanh$——它是整件事里唯一的非线性来源。</p>
+
+						<div class="ladder">
+							<h3>为什么非得有那一下弯折</h3>
+							<p>因为线性变换叠加起来还是线性变换。$W_2(W_1x)=(W_2W_1)x$，
+							一百层叠在一起，效果等同于一个矩阵。<strong>没有 $\sigma$，深度毫无意义。</strong><br />
+							弯一下之后，叠加才开始产生新东西。</p>
+						</div>
+
+						<hr class="major" />
+
+						<h2>它和多项式拟合差在哪</h2>
+
+						<span class="image main"><img src="images/nn1_basis.png" alt="多项式的基函数是写死的，网络的基函数是学出来的" /></span>
+
+						<p>拟合板块里，我们用 $1,\,x,\,x^2,\,x^3$ 去拟合舵机的标定曲线。
+						这四个函数是<strong>你选的</strong>——设计矩阵 $A$ 的每一列都由你写死，
+						最小二乘只负责求它们的权重。</p>
+
+						<p>网络不一样。中间那张图的三条 $\tanh$，它们的陡度和位置<strong>也是学出来的</strong>。
+						训练时不只在调最后的加权系数，连"用哪几个基函数"都在调。</p>
+
+						<div class="eqbox">
+							<span class="lbl">同一件事的两种分工</span><br />
+							<strong>最小二乘</strong>：基函数你定，权重我解　→　线性方程组，一步出结果<br />
+							<strong>神经网络</strong>：基函数和权重我都调 →　非线性优化，只能一步步试
+						</div>
+
+						<p>右图是三条 $\tanh$ 加权拼出的抛物线，RMS 已经到 $0.027$。
+						<strong>三个隐单元就够了</strong>——它们不是 $1,x,x^2$，但拼出来的效果一样。</p>
+
+						<hr class="major" />
+
+						<h2>训练：把误差的责任分摊回去</h2>
+
+						<span class="image main"><img src="images/nn2_chain.png" alt="前向一层层往右算，反向把偏导沿同一条路倒着传" /></span>
+
+						<p>前向很直白：$x$ 进去，一层层算到 $\hat y$，和目标比一下得到损失 $L$。</p>
+
+						<p>难的是反过来问：<strong>要减小 $L$，第一层那个 $w_1$ 该往哪边动？</strong>
+						它离出口隔了好几层，影响是间接的。答案就是<a href="calculus.html">微积分板块</a>里的链式法则：</p>
+
+						<div class="eqbox" style="text-align:center;border-left-color:#ef6a5e">
+							$\dfrac{\partial L}{\partial w_1}
+							=\dfrac{\partial L}{\partial\hat y}\cdot
+							\dfrac{\partial\hat y}{\partial H}\cdot
+							\dfrac{\partial H}{\partial z}\cdot
+							\dfrac{\partial z}{\partial w_1}$
+						</div>
+
+						<p>一串乘法。<strong>反向传播就是把这串乘法从右往左算一遍</strong>，
+						顺手把中间结果存下来给前面几层复用——不然每个参数都从头乘一遍，代价会大得离谱。</p>
+
+						<p>写成代码只有三行，和上面那串偏导一一对应：</p>
+
+<pre><code>dY = 2*(yhat - y)/61              # ∂L/∂ŷ
+dH = dY @ w2.T * (1 - tanh(z)**2) # 乘 ∂ŷ/∂H，再乘 ∂H/∂z
+dw = x.T @ dH                     # 乘 ∂z/∂w₁</code></pre>
+
+						<p>第二行末尾那个 $1-\tanh^2 z$ 就是 $\tanh$ 的导数。
+						<strong>它的最大值是 1，而且在两端迅速趋近于零</strong>——
+						几十层叠起来，这些小于 1 的数连乘，梯度传到最前面就几乎没了。
+						这就是深层网络里的梯度消失，也是后来 ReLU 取代 $\tanh$ 的原因之一。</p>
+
+						<div class="demos" style="grid-template-columns:1fr">
+							<a class="demo" href="demo-nn.html" target="_blank" rel="noopener">
+								<span class="tag">Core</span>
+								<strong>用网络训练一条二次曲线</strong>
+								<span class="d">61 个样本、3 个隐单元。②那块色块纹理是 61×3 的激活矩阵，
+								训练时它一直在变——那就是基函数在被学出来。
+								底部三个代码框会跟着训练阶段高亮，走到哪一步就亮哪一个。
+								拖学习率 η：太大损失乱跳，太小几乎不动。</span>
+								<span class="go">打开演示 →</span>
+							</a>
+						</div>
+
+						<hr class="major" />
+
+						<h2>四个概念</h2>
+
+						<div class="concept">
+							<h3>激活函数　<span class="en">Activation</span></h3>
+							<dl>
+								<dt>是什么</dt>
+								<dd>逐元素作用的非线性函数，$\tanh$、ReLU、sigmoid。</dd>
+								<dt>为什么必须有</dt>
+								<dd>它是网络里<strong>唯一的非线性来源</strong>。去掉它，
+								再多层也塌回成一个矩阵，表达能力和一次线性回归相同。</dd>
+								<dt>结构位置</dt>
+								<dd>正是它让"基函数可学"成为可能——弯折的位置和陡度由 $W,b$ 决定，
+								而 $W,b$ 是训练出来的。</dd>
+								<dt>选错的代价</dt>
+								<dd class="zero">$\tanh$ 两端导数趋零，深层会梯度消失；
+								ReLU 输入为负时导数恰好是 0，神经元可能"死掉"再也不更新。</dd>
+							</dl>
+						</div>
+
+						<div class="concept" style="border-left-color:#ef6a5e">
+							<h3>反向传播　<span class="en">Backpropagation</span></h3>
+							<dl>
+								<dt>是什么</dt>
+								<dd>把链式法则从输出往输入算一遍，同时缓存中间结果。</dd>
+								<dt>不是什么</dt>
+								<dd>它<strong>不是一种新的求导方法</strong>，就是链式法则。
+								真正的贡献是那个"顺手存下来复用"的组织方式，
+								让梯度的计算量和前向差不多，而不是随层数爆炸。</dd>
+								<dt>结构位置</dt>
+								<dd>现代框架里叫自动微分。你写前向，梯度是它自己推出来的。</dd>
+								<dt>断在哪里</dt>
+								<dd class="zero">链上任何一环的局部导数接近零，后面的层就收不到信号了。</dd>
+							</dl>
+						</div>
+
+						<div class="concept" style="border-left-color:#6ed6a0">
+							<h3>梯度下降　<span class="en">Gradient Descent</span></h3>
+							<dl>
+								<dt>是什么</dt>
+								<dd>$\theta\leftarrow\theta-\eta\,\nabla L$，朝损失下降最快的反方向迈一步。</dd>
+								<dt>学习率 $\eta$</dt>
+								<dd>步子大小。太大跨过谷底来回震荡，太小要走很久。
+								演示里拖那条滑块能直接看到损失曲线的反应。</dd>
+								<dt>结构位置</dt>
+								<dd>它是"令导数为零"解不出来时的退路。
+								最小二乘能一步解出，是因为损失对参数是二次的、导数是线性的；
+								网络的损失非线性，只好一步步试探着下山。</dd>
+								<dt>停在哪里</dt>
+								<dd class="zero">梯度为零的地方——可能是最小值，也可能是鞍点或局部极小。
+								<strong>没有任何保证它是全局最优。</strong></dd>
+							</dl>
+						</div>
+
+						<div class="concept" style="border-left-color:#f0a63c">
+							<h3>过拟合　<span class="en">Overfitting</span></h3>
+							<dl>
+								<dt>是什么</dt>
+								<dd>模型把训练数据里的噪声也学了进去。</dd>
+								<dt>怎么看出来</dt>
+								<dd>训练损失一直降，但换一批数据表现变差。
+								演示里把噪声滑块拉大、让它训久一点，曲线会开始追着噪点扭。</dd>
+								<dt>结构位置</dt>
+								<dd>参数越多越容易过拟合。舵机标定那页里，
+								<strong>3 阶到 4 阶几乎没有改进，就是在告诉你"到此为止"</strong>——
+								再加阶数只是在拟合噪声。</dd>
+								<dt>反过来</dt>
+								<dd class="zero">参数太少则欠拟合，连真实规律都表达不出来。
+								这两者之间的取舍没有公式，只有判断。</dd>
+							</dl>
+						</div>
+
+						<hr class="major" />
+
+						<h2>回到舵机：三万次 vs 一步</h2>
+
+						<span class="image main"><img src="images/fig5_ls_vs_nn.png" alt="最小二乘与神经网络在同一组真实数据上的对比" /></span>
+
+						<p>同一组 61 点真实标定数据。最小二乘解一个线性方程组，
+						<strong>一步得到 0.621°</strong>；小网络梯度下降跑了<strong>三万轮，追到 0.615°</strong>。
+						几乎打平。</p>
+
+						<div class="ladder" style="border-left-color:#b388ff">
+							<h3>该怎么读这个结果</h3>
+							<p>不是说网络没用，而是：<strong>当你知道曲线该长什么样的时候，
+							把形状写进模型远比让网络自己猜划算。</strong>
+							电位器的分压特性本来就是低阶光滑的，三四个系数足够描述，
+							最小二乘一步解出还附赠唯一性保证。<br />
+							网络的价值在你<em>不知道</em>形状的场合——图像、语音、语言，
+							没人写得出那个"基函数"该是什么样。</p>
+						</div>
+
+						<p>还有一点值得留意：两者的误差都卡在 $0.6°$ 上下动不了。
+						因为它们面对的是同一个天花板——那 $2.07°$ 的机械回差在数据里留下的印记。
+						<strong>换模型解决不了机械问题。</strong></p>
+
+						<ul class="actions">
+							<li><a href="servo-calib.html" class="button">实战 · 舵机标定<br /><span class="btn-en">Where the data came from</span></a></li>
+							<li><a href="fitting.html" class="button">回看 · 拟合与最小二乘<br /><span class="btn-en">One-step solution</span></a></li>
+						</ul>
+
+						<hr class="major" />
+
+						<h2>一句话</h2>
+
+						<blockquote>神经网络不是一门新数学。<br />
+						<strong>它是矩阵、导数、拟合这三件旧事，被反复叠加了很多层。</strong><br />
+						它厉害的地方不在数学深，而在规模大到某个程度之后，
+						"自己找基函数"这件事开始比"人来指定基函数"更有效。</blockquote>
+
+						<ul class="actions">
+							<li><a href="fitting.html" class="button">&larr; 拟合与最小二乘<br /><span class="btn-en">Least Squares</span></a></li>
+							<li><a href="index.html" class="button primary">回到首页 · 八个板块<br /><span class="btn-en">All eight</span></a></li>
+						</ul>
+
+					</div>
+				</section>
+			</div>
+
+			<footer id="footer">
+				<div class="inner">
+					<ul class="icons">
+						<li><a href="#" class="icon brands alt fa-github"><span class="label">GitHub</span></a></li>
+						<li><a href="mailto:kneadu@outlook.com" class="icon solid alt fa-envelope"><span class="label">Email</span></a></li>
+					</ul>
+					<ul class="copyright">
+						<li>&copy; 看得见的数学</li><li>Design: Baoquan Zhang</li><li>Template: <a href="https://html5up.net">HTML5 UP</a></li>
+					</ul>
+				</div>
+			</footer>
+
+		</div>
+
+		<script src="assets/js/jquery.min.js"></script>
+		<script src="assets/js/jquery.scrolly.min.js"></script>
+		<script src="assets/js/jquery.scrollex.min.js"></script>
+		<script src="assets/js/browser.min.js"></script>
+		<script src="assets/js/breakpoints.min.js"></script>
+		<script src="assets/js/util.js"></script>
+		<script src="assets/js/main.js"></script>
+
+	</body>
+</html>
