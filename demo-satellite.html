@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>地面站对星 · 一次完整的向量计算</title>
+<style>
+:root{
+  --field:#0f1826;--panel:#16223a;--panel-2:#1c2b47;--line:#2a3c5e;
+  --fg:#e6ecf5;--fg-dim:#93a4c0;
+  --amber:#f0a63c;--amber-soft:#f7c579;--violet:#b388ff;--violet-soft:#d3bcff;
+  --cyan:#3ec8d8;--cyan-soft:#8fe3ed;--coral:#ef6a5e;--green:#6ed6a0;--blue:#5aa9f0;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:
+    radial-gradient(1100px 500px at 14% -12%, #16243c 0%, transparent 60%),
+    radial-gradient(900px 460px at 88% 112%, #1d2438 0%, transparent 62%),
+    var(--field);
+  color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  font-size:15px;line-height:1.6;min-height:100vh;
+}
+.masthead{padding:22px 26px 14px;border-bottom:1px solid var(--line);
+  display:flex;flex-wrap:wrap;align-items:baseline;gap:14px 22px}
+.masthead h1{font-family:Georgia,"Songti SC","Noto Serif CJK SC",serif;font-size:23px;font-weight:600;margin:0}
+.masthead p{margin:0;color:var(--fg-dim);font-size:13.5px;max-width:66ch}
+
+.math-strip{display:flex;gap:10px;flex-wrap:wrap;padding:12px 26px;border-bottom:1px solid var(--line);
+  font-size:12.5px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:var(--fg-dim)}
+.math-strip span{padding:3px 10px;border:1px solid var(--line);border-radius:2px;background:var(--panel)}
+.math-strip .x{color:var(--violet-soft);border-color:#4a3a6e}
+.math-strip .d{color:var(--amber-soft);border-color:#6b5220}
+
+.stage{display:grid;grid-template-columns:1.3fr 1fr;align-items:stretch}
+.side{padding:20px 24px 26px;min-width:0}
+.side.left{border-right:1px solid var(--line)}
+.side-head{display:flex;align-items:baseline;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+.side-head h2{font-family:Georgia,"Songti SC",serif;font-size:18px;margin:0;font-weight:600;color:var(--cyan-soft)}
+.side.right .side-head h2{color:var(--amber-soft)}
+.side-head .eq{font-size:13px;color:var(--fg-dim);
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+
+.viewport{position:relative;width:100%;border:1px solid var(--line);border-radius:3px;overflow:hidden;touch-action:none}
+#vp3d{aspect-ratio:4/3;min-height:340px;cursor:grab;background:radial-gradient(120% 100% at 50% 20%,#101c30 0%,#080d17 100%)}
+#vp3d:active{cursor:grabbing}
+#vpSky{aspect-ratio:1/1;min-height:250px;background:#0c131f}
+.viewport canvas{display:block;width:100%;height:100%}
+.hint{position:absolute;left:12px;top:10px;font-size:11.5px;color:#7d8ea8;pointer-events:none}
+
+/* 画布角上的公式 */
+.formula{
+  position:absolute;left:12px;bottom:12px;right:12px;
+  background:rgba(9,15,26,.80);border:1px solid var(--line);border-radius:3px;
+  padding:9px 12px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  font-size:12px;line-height:1.85;color:var(--fg-dim);pointer-events:none;
+  backdrop-filter:blur(3px);
+}
+.formula .l{display:flex;gap:8px;flex-wrap:wrap;align-items:baseline}
+.formula .name{color:#6f88ab;min-width:112px;display:inline-block}
+.formula b{color:var(--fg);font-weight:600}
+.formula .hx{color:var(--violet-soft)}
+.formula .hd{color:var(--amber-soft)}
+.formula .bad{color:var(--coral)}
+
+.dials{margin-top:14px;display:grid;grid-template-columns:repeat(auto-fit,minmax(104px,1fr));
+  gap:1px;background:var(--line);border:1px solid var(--line);border-radius:3px;overflow:hidden}
+.dial{background:var(--panel);padding:9px 11px}
+.dial .k{font-size:11.5px;color:var(--fg-dim);display:block;margin-bottom:2px}
+.dial .v{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  font-size:18px;font-variant-numeric:tabular-nums;line-height:1.25;color:var(--amber)}
+.dial.geo .v{color:var(--violet)}
+.dial.warn .v{color:var(--coral)}
+.dial.ok .v{color:var(--green)}
+
+.controls{margin-top:16px;display:grid;gap:12px}
+.ctl{display:grid;grid-template-columns:104px 1fr 88px;align-items:center;gap:12px}
+.ctl label{font-size:13.5px;color:var(--fg-dim)}
+.ctl output{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13px;
+  text-align:right;font-variant-numeric:tabular-nums}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:22px;background:transparent;margin:0}
+input[type=range]::-webkit-slider-runnable-track{height:2px;background:var(--line);border-radius:2px}
+input[type=range]::-moz-range-track{height:2px;background:var(--line);border-radius:2px}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:15px;height:15px;border-radius:50%;
+  margin-top:-6.5px;border:none;cursor:pointer;background:var(--cyan)}
+input[type=range]::-moz-range-thumb{width:15px;height:15px;border-radius:50%;border:none;cursor:pointer;background:var(--cyan)}
+.side.right input[type=range]::-webkit-slider-thumb{background:var(--amber)}
+.side.right input[type=range]::-moz-range-thumb{background:var(--amber)}
+input:focus-visible,button:focus-visible{outline:2px solid var(--fg);outline-offset:3px;border-radius:3px}
+
+.switch-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:13.5px;color:var(--fg-dim)}
+.btn{background:var(--panel);border:1px solid var(--line);color:var(--fg);font:inherit;font-size:12.5px;
+  padding:5px 13px;border-radius:3px;cursor:pointer}
+.btn:hover{background:var(--panel-2)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:3px;overflow:hidden}
+.seg button{background:transparent;border:none;color:var(--fg-dim);font:inherit;font-size:12.5px;
+  padding:5px 10px;cursor:pointer}
+.seg button[aria-pressed=true]{background:var(--panel-2);color:var(--fg)}
+.check{display:inline-flex;align-items:center;gap:7px;cursor:pointer;color:var(--fg-dim)}
+.check input{accent-color:var(--cyan);width:15px;height:15px}
+
+.notes{border-top:1px solid var(--line);padding:24px 26px 40px;
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:26px 34px}
+.notes section h3{font-family:Georgia,"Songti SC",serif;font-size:16px;margin:0 0 6px;font-weight:600}
+.notes section p{margin:0;color:var(--fg-dim);font-size:13.5px;max-width:52ch}
+.notes .k-violet{color:var(--violet-soft)}
+.notes .k-amber{color:var(--amber-soft)}
+.notes code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12.5px;
+  color:var(--fg);background:var(--panel-2);padding:1px 5px;border-radius:2px}
+.fallback{padding:40px 26px;color:var(--coral)}
+
+@media (max-width:980px){
+  .stage{grid-template-columns:1fr}
+  .side.left{border-right:none;border-bottom:1px solid var(--line)}
+  .formula{font-size:11px}
+  .formula .name{min-width:96px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+<style>
+.backbar{
+  display:flex;align-items:center;gap:.55rem;
+  padding:9px 26px;border-bottom:1px solid var(--line,#2a3c5e);
+  font-size:13px;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif;
+}
+.backbar a{color:#93a4c0;text-decoration:none;border-bottom:1px solid transparent}
+.backbar a:hover{color:#e6ecf5;border-bottom-color:#e6ecf5}
+.backbar .sep{color:#3d5170}
+</style>
+</head>
+<body>
+<div class="backbar">
+  <a href="vectors.html">&larr; 向量与空间　Vectors</a>
+  <span class="sep">·</span>
+  <a href="index.html">看得见的数学　Home</a>
+</div>
+
+
+<header class="masthead">
+  <h1>地面站对星</h1>
+  <p>天线该指向哪儿？在地面站脚下用叉积搭一个本地坐标系，再用点积量卫星在这个系里的方向——仰角、方位角、斜距，三个数就都出来了。</p>
+</header>
+
+<div class="math-strip">
+  <span class="x">Ê = Û × ŷ　（本地东向）</span>
+  <span class="x">N̂ = Ê × Û　（本地北向）</span>
+  <span class="d">sin El = v·Û ⁄ |v|</span>
+  <span class="d">Az = atan2(v·Ê, v·N̂)</span>
+  <span class="d">可见性：v·Û &gt; 0</span>
+</div>
+
+<main class="stage">
+
+  <div class="side left">
+    <div class="side-head">
+      <h2>地心坐标系</h2>
+      <span class="eq">v = P − S　（卫星位置 减 地面站位置）</span>
+    </div>
+
+    <div class="viewport" id="vp3d">
+      <canvas id="cv3d"></canvas>
+      <span class="hint">拖动旋转 · 滚轮缩放</span>
+      <div class="formula" id="formulaBox"></div>
+    </div>
+
+    <div class="dials">
+      <div class="dial" id="dElWrap"><span class="k">仰角 El</span><span class="v" id="dEl">—</span></div>
+      <div class="dial"><span class="k">方位角 Az</span><span class="v" id="dAz">—</span></div>
+      <div class="dial"><span class="k">斜距 |v|</span><span class="v" id="dRange">—</span></div>
+      <div class="dial geo"><span class="k">地心角 γ</span><span class="v" id="dGamma">—</span></div>
+    </div>
+
+    <div class="controls">
+      <div class="ctl">
+        <label for="sLat">地面站纬度</label>
+        <input type="range" id="sLat" min="-81" max="81" step="0.5" value="39.9">
+        <output id="oLat">39.9°N</output>
+      </div>
+      <div class="ctl">
+        <label for="sLon">地面站经度</label>
+        <input type="range" id="sLon" min="-180" max="180" step="0.5" value="116.4">
+        <output id="oLon">116.4°E</output>
+      </div>
+      <div class="switch-row">
+        <span>常用站点</span>
+        <span class="seg" role="group" aria-label="预设站点">
+          <button data-lat="39.9" data-lon="116.4" aria-pressed="true">北京</button>
+          <button data-lat="1.35" data-lon="103.8" aria-pressed="false">新加坡</button>
+          <button data-lat="-33.9" data-lon="151.2" aria-pressed="false">悉尼</button>
+          <button data-lat="78.2" data-lon="15.6" aria-pressed="false">斯瓦尔巴</button>
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <div class="side right">
+    <div class="side-head">
+      <h2>天空图 · 天线指向</h2>
+      <span class="eq">圆心天顶，外圈地平线</span>
+    </div>
+
+    <div class="viewport" id="vpSky">
+      <canvas id="cvSky"></canvas>
+    </div>
+
+    <div class="dials">
+      <div class="dial"><span class="k">单程时延</span><span class="v" id="dDelay">—</span></div>
+      <div class="dial"><span class="k">轨道周期</span><span class="v" id="dPeriod">—</span></div>
+      <div class="dial" id="dDriftWrap"><span class="k">每日漂移</span><span class="v" id="dDrift">—</span></div>
+    </div>
+
+    <div class="controls">
+      <div class="ctl">
+        <label for="sSatLon">卫星星下点经度</label>
+        <input type="range" id="sSatLon" min="-180" max="180" step="0.5" value="110.5">
+        <output id="oSatLon">110.5°E</output>
+      </div>
+      <div class="ctl">
+        <label for="sAlt">卫星高度</label>
+        <input type="range" id="sAlt" min="35000" max="42000" step="10" value="35786">
+        <output id="oAlt">35786 km</output>
+      </div>
+      <div class="switch-row">
+        <button class="btn" id="btnGeo">回到同步高度 35786 km</button>
+        <label class="check"><input type="checkbox" id="cFootprint" checked> 显示覆盖区</label>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<div class="notes">
+  <section>
+    <h3 class="k-violet">叉积负责搭坐标系</h3>
+    <p>地面站脚下的"东、北、天顶"不是天上掉下来的，得现搭。天顶方向 <code>Û</code> 就是地面站的位置向量归一化；东向由 <code>Û × ŷ</code> 得到（ŷ 是地轴），北向再由 <code>Ê × Û</code> 补齐。三个互相垂直的单位向量，两次叉积就位——这和游戏里用 <code>right = forward × up</code> 搭相机是同一招。到了南北极附近 Û 与地轴几乎平行，叉积趋于零，东向失去定义，所以极区站点要换别的坐标系。</p>
+  </section>
+  <section>
+    <h3 class="k-amber">点积负责量角度</h3>
+    <p>视线向量 <code>v = P − S</code> 拿到手后，仰角就是它与天顶方向的夹角余角：<code>sin El = v·Û / |v|</code>。方位角是把 v 投影到水平面上，看它在东、北两个方向各占多少：<code>Az = atan2(v·Ê, v·N̂)</code>。可见性判据更简单——<code>v·Û &gt; 0</code> 就在地平线以上，小于零就被地球挡住了。三个点积，天线的两个指向角全部搞定。</p>
+    <p style="margin-top:10px">顺带一提，教科书那个 <code>tan Az = tan Δλ / sin φ</code> 必须按南北半球、卫星在东在西分四种情况补角，抄错一次就差 180°。向量法里 <code>atan2</code> 从两个投影分量的符号自己就把象限定了，一行写完，南北半球通用——拖动纬度穿过赤道，读数是连续的。</p>
+  </section>
+  <section>
+    <h3>为什么只有一个高度能同步</h3>
+    <p>拖动高度滑块看轨道周期。由开普勒第三定律 <code>T = 2π√(r³/μ)</code>，周期只由轨道半径决定。要让卫星看起来钉在天上，周期必须等于一个恒星日 23h56m04s，反推出唯一解 r = 42164 km，也就是高度 35786 km。高一点周期变长，卫星相对地面向西漂；低一点向东漂——每日漂移那个读数就是这么算的，星下点经度会一天天挪走。</p>
+  </section>
+  <section>
+    <h3>这些数字有什么用</h3>
+    <p>仰角决定天线抬多高，也决定信号穿过多厚的大气：仰角低于 5° 到 10° 通常就不能用了，雨衰和地面杂波都会变严重。把纬度拖到 81°，你会发现同步卫星根本升不出地平线——这正是高纬度地区要改用极轨或大椭圆轨道的原因。斜距除以光速就是单程时延，同步卫星约 120 毫秒，一来一回加上转发接近 0.5 秒，这就是卫星电话里那种明显停顿的来源。</p>
+  </section>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function () {
+"use strict";
+if (typeof THREE === "undefined") {
+  document.querySelector(".stage").innerHTML =
+    '<div class="fallback">三维库没能加载，请检查网络连接后刷新页面。</div>';
+  return;
+}
+function $(id){ return document.getElementById(id); }
+var D2R = Math.PI/180, R2D = 180/Math.PI;
+
+/* 物理常数 */
+var RE = 6378.137;                 /* 地球赤道半径 km */
+var MU = 398600.4418;              /* 地球引力常数 km³/s² */
+var C_LIGHT = 299792.458;          /* km/s */
+var T_SIDEREAL = 86164.0905;       /* 恒星日 s */
+var GEO_ALT = 35786.0;
+
+var SCALE = 1/RE;                  /* 场景中地球半径 = 1 */
+
+/* 经纬度 → 直角坐标（+y 为地轴，+x 指向 0°E 赤道，+z 指向 90°E） */
+function geo2vec(latDeg, lonDeg, radius) {
+  var la = latDeg*D2R, lo = lonDeg*D2R;
+  return new THREE.Vector3(
+    radius*Math.cos(la)*Math.cos(lo),
+    radius*Math.sin(la),
+    radius*Math.cos(la)*Math.sin(lo));
+}
+
+/* ============ three.js 场景 ============ */
+var wrap3d = $("vp3d");
+var renderer = new THREE.WebGLRenderer({canvas:$("cv3d"), antialias:true, alpha:true});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+var scene = new THREE.Scene();
+var cam = new THREE.PerspectiveCamera(38, 4/3, 0.05, 400);
+scene.add(new THREE.AmbientLight(0xffffff, 0.62));
+var dl = new THREE.DirectionalLight(0xffffff, 0.75); dl.position.set(5,3,6); scene.add(dl);
+var dl2 = new THREE.DirectionalLight(0x6688ff, 0.25); dl2.position.set(-4,-2,-5); scene.add(dl2);
+
+var camState = {az:0.9, pol:1.05, r:16};
+(function(){
+  var t = new THREE.Vector3(0,0,0);
+  function apply(){
+    camState.pol = Math.max(0.1, Math.min(Math.PI-0.1, camState.pol));
+    camState.r = Math.max(2.2, Math.min(45, camState.r));
+    cam.position.set(
+      t.x + camState.r*Math.sin(camState.pol)*Math.cos(camState.az),
+      t.y + camState.r*Math.cos(camState.pol),
+      t.z + camState.r*Math.sin(camState.pol)*Math.sin(camState.az));
+    cam.lookAt(t);
+  }
+  var drag=false,lx=0,ly=0;
+  wrap3d.addEventListener("pointerdown",function(e){drag=true;lx=e.clientX;ly=e.clientY;wrap3d.setPointerCapture(e.pointerId);});
+  wrap3d.addEventListener("pointermove",function(e){
+    if(!drag)return;
+    camState.az-=(e.clientX-lx)*0.0075; camState.pol-=(e.clientY-ly)*0.0075;
+    lx=e.clientX;ly=e.clientY;apply();
+  });
+  function stop(e){drag=false;if(e.pointerId!==undefined&&wrap3d.hasPointerCapture&&wrap3d.hasPointerCapture(e.pointerId))wrap3d.releasePointerCapture(e.pointerId);}
+  wrap3d.addEventListener("pointerup",stop); wrap3d.addEventListener("pointercancel",stop);
+  wrap3d.addEventListener("wheel",function(e){e.preventDefault();camState.r*=(1+Math.sign(e.deltaY)*0.09);apply();},{passive:false});
+  apply();
+})();
+
+/* 地球 */
+var earth = new THREE.Mesh(new THREE.SphereGeometry(1, 48, 32),
+  new THREE.MeshStandardMaterial({color:0x1b3a5c, roughness:0.95, metalness:0.0,
+    transparent:true, opacity:0.92}));
+scene.add(earth);
+(function graticule(){
+  var mat = new THREE.LineBasicMaterial({color:0x3f6f96, transparent:true, opacity:0.34});
+  var matHi = new THREE.LineBasicMaterial({color:0x6fd0e8, transparent:true, opacity:0.75});
+  var i, j, pts;
+  for (i=-75; i<=75; i+=15){                       /* 纬线 */
+    pts = [];
+    for (j=0;j<=360;j+=4) pts.push(geo2vec(i, j, 1.002));
+    scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),
+      i===0 ? matHi : mat));
+  }
+  for (i=0; i<360; i+=15){                          /* 经线 */
+    pts = [];
+    for (j=-90;j<=90;j+=4) pts.push(geo2vec(j, i, 1.002));
+    scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),
+      i===0 ? matHi : mat));
+  }
+})();
+/* 地轴 */
+(function(){
+  var g = new THREE.BufferGeometry().setFromPoints([
+    new THREE.Vector3(0,-1.45,0), new THREE.Vector3(0,1.45,0)]);
+  scene.add(new THREE.Line(g, new THREE.LineDashedMaterial({
+    color:0x8fa0bb, dashSize:0.1, gapSize:0.07, transparent:true, opacity:0.6})).computeLineDistances());
+})();
+
+/* 静止轨道圆 */
+var orbitRing = new THREE.Line(new THREE.BufferGeometry(),
+  new THREE.LineBasicMaterial({color:0xf0a63c, transparent:true, opacity:0.35}));
+scene.add(orbitRing);
+
+/* 地面站 */
+var station = new THREE.Mesh(new THREE.SphereGeometry(0.035, 14, 14),
+  new THREE.MeshBasicMaterial({color:0x6ed6a0}));
+scene.add(station);
+/* 卫星 */
+var satBody = new THREE.Mesh(new THREE.BoxGeometry(0.10, 0.10, 0.10),
+  new THREE.MeshStandardMaterial({color:0xf7c579, roughness:0.4, emissive:0x3a2a08}));
+scene.add(satBody);
+var satPanel = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.006, 0.10),
+  new THREE.MeshStandardMaterial({color:0x2f5ea8, roughness:0.35, emissive:0x0a1730}));
+scene.add(satPanel);
+
+/* 三角形：地心–地面站–卫星 */
+function newLine(color, opacity, dashed, w){
+  var g = new THREE.BufferGeometry();
+  g.setAttribute("position", new THREE.BufferAttribute(new Float32Array(6), 3));
+  var m = dashed
+    ? new THREE.LineDashedMaterial({color:color, dashSize:0.16, gapSize:0.11, transparent:true, opacity:opacity})
+    : new THREE.LineBasicMaterial({color:color, transparent:true, opacity:opacity});
+  var l = new THREE.Line(g, m);
+  l.userData.dashed = !!dashed;
+  l.setEnds = function(a,b){
+    var p = this.geometry.attributes.position;
+    p.setXYZ(0,a.x,a.y,a.z); p.setXYZ(1,b.x,b.y,b.z);
+    p.needsUpdate = true; this.geometry.computeBoundingSphere();
+    if (this.userData.dashed) this.computeLineDistances();
+  };
+  scene.add(l); return l;
+}
+var lineOS = newLine(0x8fa0bb, 0.55, false);       /* 地心 → 地面站 */
+var lineOP = newLine(0x8fa0bb, 0.4, true);         /* 地心 → 卫星 */
+var lineSP = newLine(0xf0a63c, 0.95, false);       /* 地面站 → 卫星（视线） */
+
+/* 本地 ENU 三箭头 */
+function makeArrow(color){
+  var g = new THREE.Group();
+  var mat = new THREE.MeshStandardMaterial({color:color, roughness:0.45});
+  var shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.011,0.011,1,10), mat);
+  var head = new THREE.Mesh(new THREE.ConeGeometry(0.032,0.09,14), mat);
+  g.add(shaft); g.add(head);
+  g.set2 = function(origin, dir, len){
+    var hl = 0.09, sl = Math.max(len-hl, 1e-4);
+    shaft.scale.set(1, sl, 1); shaft.position.set(0, sl/2, 0);
+    head.position.set(0, sl+hl/2, 0);
+    this.position.copy(origin);
+    this.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), dir.clone().normalize());
+  };
+  scene.add(g); return g;
+}
+var arrU = makeArrow(0x5aa9f0), arrE = makeArrow(0xef6a5e), arrN = makeArrow(0x6ed6a0);
+function sprite(text, css, sc){
+  var c = document.createElement("canvas"); c.width=128;c.height=64;
+  var x=c.getContext("2d");
+  x.font="bold 46px ui-monospace,Menlo,monospace";
+  x.textAlign="center";x.textBaseline="middle";
+  x.shadowColor="rgba(0,0,0,.9)";x.shadowBlur=10;x.fillStyle=css;
+  x.fillText(text,64,34);
+  var t=new THREE.CanvasTexture(c); t.minFilter=THREE.LinearFilter;
+  var s=new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true,depthTest:false}));
+  s.scale.set(sc||0.30, (sc||0.30)*0.5, 1); s.renderOrder=200; scene.add(s); return s;
+}
+var lblU = sprite("U","#5aa9f0"), lblE = sprite("E","#ef6a5e"), lblN = sprite("N","#6ed6a0");
+var lblSat = sprite("SAT","#f7c579",0.42), lblSta = sprite("GS","#6ed6a0",0.34);
+
+/* 覆盖区（卫星可见的地表圆） */
+var footprint = new THREE.Line(new THREE.BufferGeometry(),
+  new THREE.LineBasicMaterial({color:0xf0a63c, transparent:true, opacity:0.55}));
+scene.add(footprint);
+
+/* ============ 状态与计算 ============ */
+var S = {lat:39.9, lon:116.4, satLon:110.5, alt:GEO_ALT, footprint:true};
+var R = {};
+
+function compute() {
+  var r = RE + S.alt;
+  var Svec = geo2vec(S.lat, S.lon, RE);          /* 地面站位置向量 (km) */
+  var Pvec = geo2vec(0, S.satLon, r);            /* 卫星位置向量，赤道面内 */
+  var v = Pvec.clone().sub(Svec);                /* 视线向量 */
+  var d = v.length();
+
+  var U = Svec.clone().normalize();              /* 天顶 */
+  var yAxis = new THREE.Vector3(0,1,0);
+  var E = new THREE.Vector3().crossVectors(U, yAxis);   /* 东 = Û × ŷ */
+  var degenerate = E.length() < 1e-6;
+  if (!degenerate) E.normalize();
+  var N = new THREE.Vector3().crossVectors(E, U).normalize();  /* 北 = Ê × Û */
+
+  var vU = v.dot(U), vE = v.dot(E), vN = v.dot(N);
+  var el = Math.asin(Math.max(-1, Math.min(1, vU/d)))*R2D;
+  var az = (Math.atan2(vE, vN)*R2D + 360) % 360;
+  var gamma = Math.acos(Math.max(-1, Math.min(1, U.dot(Pvec.clone().normalize()))))*R2D;
+
+  var T = 2*Math.PI*Math.sqrt(Math.pow(r,3)/MU);
+  var drift = 360*(T_SIDEREAL/T - 1);            /* 度/天，正=东漂 */
+  var delay = d/C_LIGHT*1000;                     /* ms 单程 */
+  var lam0 = Math.acos(Math.min(1, RE/r))*R2D;    /* 覆盖区半张角（地心角） */
+
+  R = {r:r, S:Svec, P:Pvec, v:v, d:d, U:U, E:E, N:N,
+       vU:vU, vE:vE, vN:vN, el:el, az:az, gamma:gamma,
+       T:T, drift:drift, delay:delay, lam0:lam0, visible:vU>0, degenerate:degenerate};
+  return R;
+}
+
+function fmtHMS(sec){
+  var h = Math.floor(sec/3600), m = Math.floor((sec%3600)/60), s = Math.round(sec%60);
+  if (s === 60){ s = 0; m++; }
+  if (m === 60){ m = 0; h++; }
+  return h + "h" + (m<10?"0":"") + m + "m" + (s<10?"0":"") + s + "s";
+}
+function fmtNum(x, d){
+  return x.toFixed(d).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
+/* ============ 三维更新 ============ */
+function update3D() {
+  var s = R.S.clone().multiplyScalar(SCALE);
+  var p = R.P.clone().multiplyScalar(SCALE);
+
+  station.position.copy(s);
+  satBody.position.copy(p);
+  satPanel.position.copy(p);
+  satPanel.lookAt(0,0,0);
+
+  lineOS.setEnds(new THREE.Vector3(0,0,0), s);
+  lineOP.setEnds(new THREE.Vector3(0,0,0), p);
+  lineSP.setEnds(s, p);
+  lineSP.material.color.setHex(R.visible ? 0xf0a63c : 0xef6a5e);
+  lineSP.material.opacity = R.visible ? 0.95 : 0.45;
+
+  var L = 0.55;
+  arrU.set2(s, R.U, L); arrU.visible = true;
+  if (!R.degenerate){
+    arrE.set2(s, R.E, L); arrN.set2(s, R.N, L);
+    arrE.visible = arrN.visible = true;
+    lblE.position.copy(s).add(R.E.clone().multiplyScalar(L+0.13));
+    lblN.position.copy(s).add(R.N.clone().multiplyScalar(L+0.13));
+    lblE.visible = lblN.visible = true;
+  } else {
+    arrE.visible = arrN.visible = lblE.visible = lblN.visible = false;
+  }
+  lblU.position.copy(s).add(R.U.clone().multiplyScalar(L+0.14));
+  lblSat.position.copy(p).add(new THREE.Vector3(0, 0.22, 0));
+  lblSta.position.copy(s).add(R.U.clone().multiplyScalar(-0.02))
+        .add(R.E.clone().multiplyScalar(0.18));
+
+  /* 静止轨道圆 */
+  var ringPts = [], i;
+  for (i=0;i<=180;i++){
+    var a = i/180*Math.PI*2;
+    ringPts.push(new THREE.Vector3(Math.cos(a)*R.r*SCALE, 0, Math.sin(a)*R.r*SCALE));
+  }
+  orbitRing.geometry.dispose();
+  orbitRing.geometry = new THREE.BufferGeometry().setFromPoints(ringPts);
+
+  /* 覆盖区：以星下点为中心、地心角 lam0 的地表圆 */
+  if (S.footprint){
+    var center = geo2vec(0, S.satLon, 1).normalize();
+    var tmp = Math.abs(center.y) < 0.9 ? new THREE.Vector3(0,1,0) : new THREE.Vector3(1,0,0);
+    var u1 = new THREE.Vector3().crossVectors(center, tmp).normalize();
+    var u2 = new THREE.Vector3().crossVectors(center, u1).normalize();
+    var lam = R.lam0*D2R, fp = [];
+    for (i=0;i<=120;i++){
+      var t2 = i/120*Math.PI*2;
+      var pt = center.clone().multiplyScalar(Math.cos(lam))
+        .add(u1.clone().multiplyScalar(Math.sin(lam)*Math.cos(t2)))
+        .add(u2.clone().multiplyScalar(Math.sin(lam)*Math.sin(t2)));
+      fp.push(pt.multiplyScalar(1.004));
+    }
+    footprint.geometry.dispose();
+    footprint.geometry = new THREE.BufferGeometry().setFromPoints(fp);
+    footprint.visible = true;
+  } else footprint.visible = false;
+}
+
+/* ============ 画布角上的公式 ============ */
+function updateFormula() {
+  var box = $("formulaBox");
+  var v = R.v, d = R.d;
+  var rows = [];
+  rows.push('<div class="l"><span class="name">S（地面站）</span>('
+    + fmtNum(R.S.x,0) + ', ' + fmtNum(R.S.y,0) + ', ' + fmtNum(R.S.z,0) + ') km</div>');
+  rows.push('<div class="l"><span class="name">P（卫星）</span>('
+    + fmtNum(R.P.x,0) + ', ' + fmtNum(R.P.y,0) + ', ' + fmtNum(R.P.z,0) + ') km</div>');
+  rows.push('<div class="l"><span class="name">v = P − S</span>('
+    + fmtNum(v.x,0) + ', ' + fmtNum(v.y,0) + ', ' + fmtNum(v.z,0)
+    + ')　|v| = <b>' + fmtNum(d,0) + '</b> km</div>');
+  if (R.degenerate) {
+    rows.push('<div class="l"><span class="name bad">Ê = Û × ŷ</span>'
+      + '<span class="bad">≈ 0，地面站在极点，东向无定义</span></div>');
+  } else {
+    rows.push('<div class="l"><span class="name hx">Ê = Û × ŷ</span>('
+      + R.E.x.toFixed(3) + ', ' + R.E.y.toFixed(3) + ', ' + R.E.z.toFixed(3)
+      + ')　<span class="hx">N̂ = Ê × Û</span></div>');
+  }
+  rows.push('<div class="l"><span class="name hd">sin El = v·Û ⁄ |v|</span>'
+    + fmtNum(R.vU,0) + ' ⁄ ' + fmtNum(d,0) + ' = ' + (R.vU/d).toFixed(4)
+    + '　→ El = <b class="' + (R.visible ? "" : "bad") + '">' + R.el.toFixed(2) + '°</b></div>');
+  rows.push('<div class="l"><span class="name hd">Az = atan2(v·Ê, v·N̂)</span>atan2('
+    + fmtNum(R.vE,0) + ', ' + fmtNum(R.vN,0) + ') = <b>' + R.az.toFixed(2) + '°</b></div>');
+  box.innerHTML = rows.join("");
+}
+
+/* ============ 天空图 ============ */
+var skyCanvas = $("cvSky"), sctx = skyCanvas.getContext("2d"), SW = 0;
+function resizeSky(){
+  var w = $("vpSky").clientWidth, h = $("vpSky").clientHeight;
+  if (!w || !h) return;
+  var dpr = Math.min(window.devicePixelRatio, 2);
+  skyCanvas.width = w*dpr; skyCanvas.height = h*dpr;
+  sctx.setTransform(dpr,0,0,dpr,0,0);
+  SW = w; drawSky();
+}
+function drawSky(){
+  if (!SW || !R.U) return;
+  var cx = SW/2, cy = SW/2, rad = SW*0.40;
+  sctx.clearRect(0,0,SW,SW);
+
+  /* 同心圈：仰角 0/30/60/90 */
+  sctx.strokeStyle = "rgba(61,81,112,.55)"; sctx.lineWidth = 1;
+  sctx.fillStyle = "rgba(147,164,192,.65)";
+  sctx.font = "11px ui-monospace, Menlo, monospace";
+  var rings = [0, 30, 60];
+  for (var i=0;i<rings.length;i++){
+    var rr = rad*(90-rings[i])/90;
+    sctx.beginPath(); sctx.arc(cx, cy, rr, 0, Math.PI*2); sctx.stroke();
+    sctx.fillText(rings[i] + "°", cx + 3, cy - rr + 12);
+  }
+  /* 10° 遮蔽角警戒圈 */
+  sctx.strokeStyle = "rgba(239,106,94,.5)";
+  sctx.setLineDash([4,4]);
+  sctx.beginPath(); sctx.arc(cx, cy, rad*80/90, 0, Math.PI*2); sctx.stroke();
+  sctx.setLineDash([]);
+
+  /* 方位辐线 */
+  sctx.strokeStyle = "rgba(61,81,112,.45)";
+  var dirs = ["N","E","S","W"];
+  for (var a=0;a<360;a+=30){
+    var th = (a-90)*D2R;
+    sctx.beginPath();
+    sctx.moveTo(cx + Math.cos(th)*rad*0.06, cy + Math.sin(th)*rad*0.06);
+    sctx.lineTo(cx + Math.cos(th)*rad, cy + Math.sin(th)*rad);
+    sctx.stroke();
+  }
+  sctx.fillStyle = "rgba(230,236,245,.8)";
+  sctx.font = "bold 13px ui-monospace, Menlo, monospace";
+  for (var k=0;k<4;k++){
+    var th2 = (k*90-90)*D2R;
+    sctx.fillText(dirs[k], cx + Math.cos(th2)*(rad+16) - 4, cy + Math.sin(th2)*(rad+16) + 5);
+  }
+
+  /* 天顶 */
+  sctx.fillStyle = "rgba(90,169,240,.9)";
+  sctx.beginPath(); sctx.arc(cx, cy, 2.5, 0, Math.PI*2); sctx.fill();
+
+  /* 卫星点 */
+  if (R.visible && !R.degenerate) {
+    var rr2 = rad*(90-R.el)/90;
+    var th3 = (R.az-90)*D2R;
+    var px = cx + Math.cos(th3)*rr2, py = cy + Math.sin(th3)*rr2;
+    sctx.strokeStyle = "rgba(240,166,60,.55)"; sctx.lineWidth = 1.4;
+    sctx.beginPath(); sctx.moveTo(cx,cy); sctx.lineTo(px,py); sctx.stroke();
+    sctx.fillStyle = "#f7c579";
+    sctx.beginPath(); sctx.arc(px, py, 6, 0, Math.PI*2); sctx.fill();
+    sctx.strokeStyle = "rgba(240,166,60,.85)"; sctx.lineWidth = 2;
+    sctx.beginPath(); sctx.arc(px, py, 11, 0, Math.PI*2); sctx.stroke();
+    sctx.fillStyle = "rgba(230,236,245,.92)";
+    sctx.font = "12px ui-monospace, Menlo, monospace";
+    sctx.fillText("El " + R.el.toFixed(1) + "°  Az " + R.az.toFixed(1) + "°", 12, SW-14);
+  } else {
+    sctx.fillStyle = "rgba(239,106,94,.9)";
+    sctx.font = "13px -apple-system,'PingFang SC',sans-serif";
+    sctx.fillText(R.degenerate ? "极点：本地东向无定义" : "卫星在地平线以下，不可见", 12, SW-14);
+  }
+}
+
+/* ============ 读数 ============ */
+function updateDials(){
+  $("dEl").textContent = R.el.toFixed(2) + "°";
+  $("dElWrap").className = "dial " + (R.el < 0 ? "warn" : R.el < 10 ? "warn" : "ok");
+  $("dAz").textContent = R.degenerate ? "—"
+    : (R.el > 89.5 ? "天顶正上方" : R.az.toFixed(2) + "°");
+  $("dRange").textContent = fmtNum(R.d, 0);
+  $("dGamma").textContent = R.gamma.toFixed(2) + "°";
+  $("dDelay").textContent = R.delay.toFixed(1) + " ms";
+  $("dPeriod").textContent = fmtHMS(R.T);
+  var dr = R.drift;
+  $("dDrift").textContent = Math.abs(dr) < 0.005 ? "≈ 0°（同步）"
+    : (dr > 0 ? "东 " : "西 ") + Math.abs(dr).toFixed(3) + "°";
+  $("dDriftWrap").className = "dial " + (Math.abs(dr) < 0.005 ? "ok" : "");
+}
+
+function refresh(){
+  compute();
+  update3D();
+  updateFormula();
+  updateDials();
+  drawSky();
+}
+
+/* ============ 控件 ============ */
+function fmtLat(v){ return Math.abs(v).toFixed(1) + "°" + (v>=0 ? "N" : "S"); }
+function fmtLon(v){
+  if (Math.abs(v) < 0.05) return "0.0°";
+  if (Math.abs(Math.abs(v)-180) < 0.05) return "180.0°";
+  return Math.abs(v).toFixed(1) + "°" + (v>=0 ? "E" : "W");
+}
+function bind(id, out, key, fmt){
+  var el = $(id);
+  el.addEventListener("input", function(){
+    S[key] = parseFloat(el.value);
+    $(out).textContent = fmt(S[key]);
+    refresh();
+  });
+  $(out).textContent = fmt(S[key]);
+}
+bind("sLat","oLat","lat", fmtLat);
+bind("sLon","oLon","lon", fmtLon);
+bind("sSatLon","oSatLon","satLon", fmtLon);
+bind("sAlt","oAlt","alt", function(v){ return fmtNum(v,0) + " km"; });
+
+Array.prototype.forEach.call(document.querySelectorAll(".seg button[data-lat]"), function(b){
+  b.addEventListener("click", function(){
+    S.lat = parseFloat(b.getAttribute("data-lat"));
+    S.lon = parseFloat(b.getAttribute("data-lon"));
+    $("sLat").value = S.lat; $("oLat").textContent = fmtLat(S.lat);
+    $("sLon").value = S.lon; $("oLon").textContent = fmtLon(S.lon);
+    Array.prototype.forEach.call(document.querySelectorAll(".seg button[data-lat]"), function(o){
+      o.setAttribute("aria-pressed", o===b ? "true":"false");
+    });
+    refresh();
+  });
+});
+$("btnGeo").addEventListener("click", function(){
+  S.alt = GEO_ALT;
+  $("sAlt").value = S.alt; $("oAlt").textContent = fmtNum(S.alt,0) + " km";
+  refresh();
+});
+$("cFootprint").addEventListener("change", function(){ S.footprint = this.checked; refresh(); });
+
+function resize3d(){
+  var w = wrap3d.clientWidth, h = wrap3d.clientHeight;
+  if (!w || !h) return;
+  renderer.setSize(w,h,false);
+  cam.aspect = w/h; cam.updateProjectionMatrix();
+}
+window.addEventListener("resize", function(){ resize3d(); resizeSky(); });
+
+function tick(){ requestAnimationFrame(tick); renderer.render(scene, cam); }
+setTimeout(function(){ resize3d(); resizeSky(); refresh(); }, 0);
+resize3d(); resizeSky(); refresh(); tick();
+
+})();
+</script>
+</body>
+</html>

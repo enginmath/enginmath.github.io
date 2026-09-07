@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>向量：十一个可旋转的三维动画</title>
+<style>
+  :root{
+    --bg:#0F1430;
+    --stage:#080B1E;
+    --panel:#161C3C;
+    --line:#2A3364;
+    --ink:#E7EAF7;
+    --dim:#98A1C8;
+    --a:#F5B33F;      /* 向量 a */
+    --b:#4FD8C4;      /* 向量 b */
+    --r:#FF6FA8;      /* 结果向量 */
+    --g:#8FE36B;      /* 辅助/差向量 */
+    --sans:"Inter","Helvetica Neue","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    --math:Georgia,"Times New Roman","Songti SC","STSong",serif;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);
+    -webkit-font-smoothing:antialiased;
+  }
+  .app{display:flex;flex-direction:column;min-height:100%}
+
+  header{padding:18px 22px 12px;border-bottom:1px solid var(--line)}
+  h1{margin:0;font-size:19px;font-weight:600;letter-spacing:.01em}
+  header p{margin:5px 0 0;color:var(--dim);font-size:13px;line-height:1.5}
+
+  nav{display:flex;gap:8px;overflow-x:auto;padding:12px 22px;border-bottom:1px solid var(--line)}
+  nav button{
+    flex:0 0 auto;display:flex;gap:9px;align-items:baseline;
+    background:transparent;border:1px solid var(--line);color:var(--dim);
+    border-radius:3px;padding:8px 13px;font-family:inherit;font-size:13px;cursor:pointer;
+    transition:border-color .15s,color .15s,background .15s;
+  }
+  nav button .sec{font-family:var(--math);font-style:italic;font-size:15px;color:var(--dim)}
+  nav button:hover{color:var(--ink);border-color:#3C4785}
+  nav button[aria-selected="true"]{background:var(--panel);border-color:#4E5AA8;color:var(--ink)}
+  nav button[aria-selected="true"] .sec{color:var(--a)}
+  nav button:focus-visible,.ctl button:focus-visible{outline:2px solid var(--b);outline-offset:2px}
+
+  main{display:grid;grid-template-columns:minmax(0,1fr) 340px;flex:1;min-height:520px}
+  .stage{position:relative;background:var(--stage);min-height:400px}
+  canvas{display:block;width:100%;height:100%;touch-action:none;cursor:grab}
+  canvas:active{cursor:grabbing}
+  .hint{position:absolute;left:14px;bottom:12px;color:#5C6699;font-size:12px;pointer-events:none}
+
+  aside{border-left:1px solid var(--line);padding:20px;display:flex;flex-direction:column;gap:16px;overflow-y:auto}
+  aside h2{margin:0;font-size:15px;font-weight:600}
+  .lede{margin:0;font-size:13.5px;line-height:1.65;color:#C6CCE8}
+  .formula{
+    font-family:var(--math);font-size:17px;line-height:1.9;
+    background:var(--panel);border-left:2px solid var(--a);padding:11px 14px;border-radius:0 3px 3px 0;
+  }
+  .formula em{font-style:italic}
+  .readout{font-size:13px;line-height:1.9;border-top:1px solid var(--line);padding-top:12px}
+  .readout .row{display:flex;justify-content:space-between;gap:12px}
+  .readout .k{color:var(--dim)}
+  .readout .v{font-family:var(--math);font-size:15px}
+  .step{font-size:13px;line-height:1.6;color:var(--b);min-height:2.6em}
+  .legend{display:flex;flex-wrap:wrap;gap:10px 16px;font-size:12.5px;color:var(--dim)}
+  .legend span{display:flex;align-items:center;gap:6px}
+  .swatch{width:14px;height:3px;border-radius:2px}
+
+  .ctl{display:flex;align-items:center;gap:12px;padding:12px 22px;border-top:1px solid var(--line)}
+  .ctl button{
+    background:var(--panel);border:1px solid var(--line);color:var(--ink);
+    border-radius:3px;padding:7px 15px;font-family:inherit;font-size:13px;cursor:pointer;
+  }
+  .ctl button:hover{border-color:#4E5AA8}
+  .ctl input[type=range]{flex:1;accent-color:var(--a);height:22px}
+  .ctl .t{font-family:var(--math);font-size:14px;color:var(--dim);min-width:3.2em;text-align:right}
+
+  @media (max-width:880px){
+    main{grid-template-columns:1fr}
+    .stage{min-height:56vh}
+    aside{border-left:0;border-top:1px solid var(--line)}
+  }
+</style>
+<style>
+.backbar{
+  display:flex;align-items:center;gap:.55rem;
+  padding:9px 22px;border-bottom:1px solid var(--line,#2A3364);
+  font-size:13px;font-family:var(--sans,-apple-system,"PingFang SC",sans-serif);
+}
+.backbar a{color:var(--dim,#98A1C8);text-decoration:none;border-bottom:1px solid transparent}
+.backbar a:hover{color:var(--ink,#E7EAF7);border-bottom-color:currentColor}
+.backbar .sep{opacity:.45}
+</style>
+</head>
+<body>
+<div class="backbar">
+  <a href="vectors.html">&larr; 向量与空间　Vectors</a>
+  <span class="sep">·</span>
+  <a href="index.html">看得见的数学　Home</a>
+</div>
+
+<div class="app">
+  <header>
+    <h1>向量：十一个可旋转的三维动画</h1>
+    <p>对应课本第 12 章，前六个讲概念，第七个补上课本没挑明的解空间视角，两个是原题（12L Q17、12N.1 Q11），最后两个看轨迹留痕。拖动画面换视角，滚轮缩放，进度条可逐帧看。</p>
+  </header>
+
+  <nav id="tabs" role="tablist"></nav>
+
+  <main>
+    <div class="stage">
+      <canvas id="cv"></canvas>
+      <div class="hint">拖动旋转 · 滚轮缩放 · 双击复位</div>
+    </div>
+    <aside>
+      <h2 id="s-title"></h2>
+      <p class="lede" id="s-lede"></p>
+      <div class="formula" id="s-formula"></div>
+      <div class="step" id="s-step"></div>
+      <div class="readout" id="s-readout"></div>
+      <div class="legend" id="s-legend"></div>
+    </aside>
+  </main>
+
+  <div class="ctl">
+    <button id="play">暂停</button>
+    <input type="range" id="scrub" min="0" max="1000" value="0">
+    <span class="t" id="tlabel">0%</span>
+    <button id="trail">留痕：开</button>
+    <button id="reset">复位视角</button>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+/* ---------- 向量运算 ---------- */
+const add=(a,b)=>[a[0]+b[0],a[1]+b[1],a[2]+b[2]];
+const sub=(a,b)=>[a[0]-b[0],a[1]-b[1],a[2]-b[2]];
+const mul=(a,k)=>[a[0]*k,a[1]*k,a[2]*k];
+const dot=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
+const cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
+const len=a=>Math.hypot(a[0],a[1],a[2]);
+const unit=a=>{const l=len(a)||1;return mul(a,1/l);};
+const lerp3=(a,b,t)=>[a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t,a[2]+(b[2]-a[2])*t];
+const clamp=(x,a,b)=>x<a?a:x>b?b:x;
+/* 把 t 映射到某个区间 [s,e] 上的 0..1 */
+const seg=(t,s,e)=>clamp((t-s)/(e-s),0,1);
+const ease=x=>x<.5?2*x*x:1-Math.pow(-2*x+2,2)/2;
+const fmt=(x,n=2)=>{const v=Math.abs(x)<1e-9?0:x;return v.toFixed(n).replace(/\.?0+$/,'')||'0';};
+const vstr=v=>`(${fmt(v[0])}, ${fmt(v[1])}, ${fmt(v[2])})`;
+
+/* ---------- 画布与相机 ---------- */
+const cv=document.getElementById('cv');
+const ctx=cv.getContext('2d');
+const DEF={az:42*Math.PI/180, el:24*Math.PI/180, dist:16};
+let cam={...DEF};
+let W=0,H=0;
+
+function resize(){
+  const r=cv.parentElement.getBoundingClientRect();
+  const dpr=Math.min(window.devicePixelRatio||1,2);
+  W=r.width; H=r.height;
+  cv.width=Math.max(1,Math.round(W*dpr));
+  cv.height=Math.max(1,Math.round(H*dpr));
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+}
+new ResizeObserver(resize).observe(cv.parentElement);
+
+let basis={};
+function setBasis(){
+  const d=[Math.cos(cam.el)*Math.cos(cam.az),Math.cos(cam.el)*Math.sin(cam.az),Math.sin(cam.el)];
+  const right=unit(cross([0,0,1],d));
+  const up=cross(d,right);
+  basis={d,right,up,C:mul(d,cam.dist),f:Math.min(W,H)*1.05,cx:W/2,cy:H*0.55};
+}
+function proj(p){
+  const v=sub(p,basis.C);
+  const z=-dot(v,basis.d);
+  if(z<0.15) return null;
+  return {x:basis.cx+basis.f*dot(v,basis.right)/z, y:basis.cy-basis.f*dot(v,basis.up)/z, z};
+}
+
+/* ---------- 绘图原语 ---------- */
+function line3(a,b,color,width=1.5,dash=null){
+  const p=proj(a),q=proj(b); if(!p||!q) return;
+  ctx.save(); ctx.strokeStyle=color; ctx.lineWidth=width;
+  if(dash) ctx.setLineDash(dash);
+  ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(q.x,q.y); ctx.stroke(); ctx.restore();
+}
+function arrow3(a,b,color,width=2.6,head=11){
+  const p=proj(a),q=proj(b); if(!p||!q) return;
+  const dx=q.x-p.x, dy=q.y-p.y, L=Math.hypot(dx,dy);
+  if(L<1.2){return;}
+  const ux=dx/L, uy=dy/L;
+  const hl=Math.min(head,L*0.42), hw=hl*0.5;
+  const bx=q.x-ux*hl, by=q.y-uy*hl;
+  ctx.save();
+  ctx.strokeStyle=color; ctx.lineWidth=width; ctx.lineCap='round';
+  ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(bx,by); ctx.stroke();
+  ctx.fillStyle=color; ctx.beginPath();
+  ctx.moveTo(q.x,q.y);
+  ctx.lineTo(bx-uy*hw, by+ux*hw);
+  ctx.lineTo(bx+uy*hw, by-ux*hw);
+  ctx.closePath(); ctx.fill();
+  ctx.restore();
+}
+function poly3(pts,fill,stroke=null,width=1){
+  const ps=pts.map(proj); if(ps.some(p=>!p)) return;
+  ctx.save(); ctx.beginPath();
+  ctx.moveTo(ps[0].x,ps[0].y);
+  for(let i=1;i<ps.length;i++) ctx.lineTo(ps[i].x,ps[i].y);
+  ctx.closePath();
+  if(fill){ctx.fillStyle=fill;ctx.fill();}
+  if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=width;ctx.stroke();}
+  ctx.restore();
+}
+function text3(p,txt,color,dx=8,dy=-8,size=13,weight=500){
+  const q=proj(p); if(!q) return;
+  ctx.save();
+  ctx.font=`${weight} ${size}px Georgia, "Songti SC", serif`;
+  ctx.fillStyle='rgba(8,11,30,.75)';
+  const w=ctx.measureText(txt).width;
+  ctx.fillRect(q.x+dx-3,q.y+dy-size+2,w+6,size+5);
+  ctx.fillStyle=color; ctx.fillText(txt,q.x+dx,q.y+dy+3);
+  ctx.restore();
+}
+function dot3(p,color,r=3.6){
+  const q=proj(p); if(!q) return;
+  ctx.save(); ctx.fillStyle=color; ctx.beginPath(); ctx.arc(q.x,q.y,r,0,7); ctx.fill(); ctx.restore();
+}
+/* 直角标记：在 P 点，由单位方向 u、v 张成 */
+function rightAngle(P,u,v,color,s=0.5){
+  const a=add(P,mul(u,s)), b=add(P,add(mul(u,s),mul(v,s))), c=add(P,mul(v,s));
+  line3(a,b,color,1.2); line3(b,c,color,1.2);
+}
+/* 3D 圆弧（角标记） */
+function arc3(O,u,n,ang,radius,color,width=1.6){
+  const N=Math.max(2,Math.round(Math.abs(ang)/0.06));
+  const pts=[];
+  for(let i=0;i<=N;i++){
+    const th=ang*i/N;
+    pts.push(add(O,mul(add(mul(u,Math.cos(th)),mul(n,Math.sin(th))),radius)));
+  }
+  ctx.save(); ctx.strokeStyle=color; ctx.lineWidth=width; ctx.beginPath();
+  let started=false;
+  for(const p of pts){const q=proj(p); if(!q){started=false;continue;}
+    if(!started){ctx.moveTo(q.x,q.y);started=true;} else ctx.lineTo(q.x,q.y);}
+  ctx.stroke(); ctx.restore();
+}
+/* 过原点、法向量为 n 的平面（画成一块方板 + 内部网格） */
+function planeQuad(O,n,half,fill,stroke){
+  const nn=unit(n);
+  const u=unit(cross(nn, Math.abs(nn[2])<0.92?[0,0,1]:[1,0,0]));
+  const v=unit(cross(nn,u));
+  const c=[
+    add(O,add(mul(u, half),mul(v, half))),
+    add(O,add(mul(u, half),mul(v,-half))),
+    add(O,add(mul(u,-half),mul(v,-half))),
+    add(O,add(mul(u,-half),mul(v, half)))
+  ];
+  poly3(c,fill,stroke,1.3);
+  for(let i=-2;i<=2;i++){
+    if(i===0) continue;
+    const k=half*i/2.5;
+    line3(add(O,add(mul(u,k),mul(v,-half))),add(O,add(mul(u,k),mul(v,half))),stroke,0.7);
+    line3(add(O,add(mul(v,k),mul(u,-half))),add(O,add(mul(v,k),mul(u,half))),stroke,0.7);
+  }
+  return {u,v};
+}
+function grid(n=6){
+  const c='rgba(255,255,255,.055)';
+  for(let i=-n;i<=n;i++){
+    line3([i,-n,0],[i,n,0],c,1);
+    line3([-n,i,0],[n,i,0],c,1);
+  }
+}
+function axes(n=6){
+  const c='#5A65A8';
+  arrow3([0,0,0],[n,0,0],c,1.6,9); text3([n,0,0],'X',c,6,-6,13);
+  arrow3([0,0,0],[0,n,0],c,1.6,9); text3([0,n,0],'Y',c,6,-6,13);
+  arrow3([0,0,0],[0,0,n],c,1.6,9); text3([0,0,n],'Z',c,6,-6,13);
+  dot3([0,0,0],'#8E97D6',3);
+  text3([0,0,0],'O','#8E97D6',-16,14,12);
+}
+
+/* ---------- 颜色 ---------- */
+const CA='#F5B33F', CB='#4FD8C4', CR='#FF6FA8', CG='#8FE36B', CD='#98A1C8';
+
+/* ---------- 轨迹留痕 ---------- */
+let trailOn=true;
+const trails=new Map();
+function clearTrails(){trails.clear();}
+function recordTrails(s,t){
+  if(!trailOn||!s.trail) return;
+  for(const tr of s.trail(t)){
+    if(!trails.has(tr.key)) trails.set(tr.key,{color:tr.color,pts:[],dots:!!tr.dots});
+    const e=trails.get(tr.key);
+    e.color=tr.color;
+    e.pts.push(tr.p);
+    if(e.pts.length>3000) e.pts.shift();
+  }
+}
+function drawTrails(){
+  if(!trailOn) return;
+  for(const e of trails.values()){
+    ctx.save();
+    ctx.strokeStyle=e.color; ctx.lineWidth=e.dots?3.2:1.8; ctx.setLineDash([]);
+    ctx.beginPath(); let started=false;
+    for(const p of e.pts){
+      const q=proj(p);
+      if(!q){started=false;continue;}
+      if(!started){ctx.moveTo(q.x,q.y);started=true;} else ctx.lineTo(q.x,q.y);
+    }
+    ctx.stroke(); ctx.restore();
+  }
+}
+
+/* ---------- 场景 ---------- */
+const scenes=[];
+
+/* 1. 空间中的点、坐标与模长 */
+(function(){
+  const P=[3,4,3], A=[3,0,0], B=[3,4,0];
+  scenes.push({
+    sec:'F', tab:'空间坐标与模长', dur:14,
+    title:'点在空间里，模长来自两次勾股定理',
+    lede:'先沿 X 走 3，再沿 Y 走 4，最后沿 Z 升 3。地面上的三角形 OAB 给出 OB，竖直的三角形 OBP 再把高度接上去。',
+    formula:'<em>OP</em> = <em>a</em><strong>i</strong> + <em>b</em><strong>j</strong> + <em>c</em><strong>k</strong><br>|<em>OP</em>| = √(<em>a</em>² + <em>b</em>² + <em>c</em>²)',
+    legend:[[CA,'x、y 分量'],[CB,'z 分量'],[CR,'位置向量 OP']],
+    draw(t){
+      grid(); axes();
+      const s1=ease(seg(t,.05,.28)), s2=ease(seg(t,.28,.48)), s3=ease(seg(t,.55,.75)), s4=seg(t,.78,1);
+      // x 分量
+      if(s1>0){ arrow3([0,0,0],lerp3([0,0,0],A,s1),CA,2.6); if(s1>.9){dot3(A,CA);text3(A,'A(3, 0, 0)',CA,8,16,12);} }
+      // y 分量
+      if(s2>0){ arrow3(A,lerp3(A,B,s2),CA,2.6); if(s2>.9){dot3(B,CA);text3(B,'B(3, 4, 0)',CA,8,16,12);} }
+      // 地面直角三角形
+      if(s2>=1){
+        poly3([[0,0,0],A,B],'rgba(245,179,63,.13)');
+        line3([0,0,0],B,CA,1.6,[5,4]);
+        rightAngle(A,[0,1,0],[-1,0,0],CA,.45);
+        text3(mul(add([0,0,0],B),.5),'OB = 5',CA,-4,-8,12);
+      }
+      // z 分量
+      if(s3>0){ arrow3(B,lerp3(B,P,s3),CB,2.6); }
+      if(s3>=1){
+        poly3([[0,0,0],B,P],'rgba(79,216,196,.13)');
+        rightAngle(B,[0,0,1],unit(sub([0,0,0],B)),CB,.45);
+        text3(lerp3(B,P,.5),'c = 3',CB,8,0,12);
+      }
+      // 位置向量
+      if(s4>0){ arrow3([0,0,0],lerp3([0,0,0],P,ease(s4)),CR,3.2,13); }
+      dot3(P, s4>0?CR:'#6E77B4',4.5);
+      text3(P,'P(3, 4, 3)', s4>0?CR:CD, 10,-10,13,600);
+    },
+    step:t=>t<.28?'沿 X 轴走 a = 3 → 点 A':t<.48?'沿 Y 轴走 b = 4 → 点 B，OB² = 3² + 4²':t<.55?'△OAB 在地面上，直角在 A':t<.78?'沿 Z 轴升 c = 3 → 点 P，直角在 B':'OP² = OB² + c² = a² + b² + c²',
+    readout(t){
+      return [['分量形式','(3, 4, 3)'],['OB','√(3²+4²) = 5'],['|OP|','√(25 + 9) = √34 ≈ 5.83']];
+    }
+  });
+})();
+
+/* 2. 两点间的向量 b - a */
+(function(){
+  const A=[3,1,1], B=[-1,4,3];
+  const AB=sub(B,A);
+  scenes.push({
+    sec:'I', tab:'两点间的向量', dur:12,
+    title:'AB = b − a：先退回原点，再走出去',
+    lede:'从 A 到 B 的位移，等于“先沿 −a 回到 O，再沿 b 到 B”。所以把 AB 平移到原点，它的终点正好是 b − a。',
+    formula:'<em>AB</em> = <em>AO</em> + <em>OB</em> = −<strong>a</strong> + <strong>b</strong> = <strong>b</strong> − <strong>a</strong>',
+    legend:[[CA,'a = OA'],[CB,'b = OB'],[CG,'AB = b − a']],
+    draw(t){
+      grid(); axes();
+      const s1=ease(seg(t,.03,.22)), s2=ease(seg(t,.18,.38)), s3=ease(seg(t,.42,.62)), s4=ease(seg(t,.7,.95));
+      if(s1>0){arrow3([0,0,0],lerp3([0,0,0],A,s1),CA,2.6); }
+      if(s1>=1){dot3(A,CA); text3(A,'A(3, 1, 1)',CA,8,18,12);}
+      if(s2>0){arrow3([0,0,0],lerp3([0,0,0],B,s2),CB,2.6);}
+      if(s2>=1){dot3(B,CB); text3(B,'B(−1, 4, 3)',CB,8,-8,12);}
+      if(s3>0){
+        arrow3(A,lerp3(A,B,s3),CG,3);
+        if(s3>=1) text3(lerp3(A,B,.5),'AB',CG,6,-8,13,600);
+      }
+      if(s4>0){
+        // 把 AB 平移回原点
+        const o=lerp3(A,[0,0,0],s4);
+        line3(A,o,'rgba(143,227,107,.35)',1,[4,4]);
+        arrow3(o,add(o,AB),CG,3);
+        if(s4>=1){ dot3(AB,CG); text3(AB,'(−4, 3, 2)',CG,8,-8,13,600); }
+      }
+    },
+    step:t=>t<.38?'画出两个位置向量 a 与 b':t<.66?'AB 连接 A 到 B：这是 B 相对 A 的位移':'把 AB 平移到原点：终点就是 b − a = (−4, 3, 2)',
+    readout(){
+      return [['a','(3, 1, 1)'],['b','(−1, 4, 3)'],['AB = b − a','(−4, 3, 2)'],['|AB|','√29 ≈ 5.39']];
+    }
+  });
+})();
+
+/* 3. 数量积与夹角 */
+(function(){
+  const a=[4,0,0], u=[1,0,0], n=unit([0,.62,1]), lb=3;
+  function bOf(th){ return mul(add(mul(u,Math.cos(th)),mul(n,Math.sin(th))),lb); }
+  scenes.push({
+    sec:'L', tab:'数量积与夹角', dur:16,
+    title:'a · b = |a||b|cos θ：投影的长度带着正负号',
+    lede:'b 绕着 a 摆动时，注意 b 在 a 上的投影（虚线落脚点）。夹角小于 90° 时投影与 a 同向，数量积为正；超过 90° 就反向，数量积为负；恰好 90° 时投影塌成一点。',
+    formula:'cos θ = (<strong>a</strong> · <strong>b</strong>) / (|<strong>a</strong>| |<strong>b</strong>|)<br><strong>a</strong> · <strong>b</strong> = 0 ⟺ <strong>a</strong> ⊥ <strong>b</strong>',
+    legend:[[CA,'a'],[CB,'b'],[CR,'b 在 a 上的投影']],
+    trail(t){
+      const th=t*2*Math.PI, b=bOf(th), c=dot(a,b)/(len(a)*len(b));
+      return [{key:'b',p:b,color:'rgba(79,216,196,.45)'},
+              {key:'foot',p:mul(u,len(b)*c),color:'rgba(255,111,168,.55)',dots:true}];
+    },
+    draw(t){
+      grid(); axes();
+      const th=t*2*Math.PI;
+      const b=bOf(th);
+      const c=dot(a,b)/(len(a)*len(b));
+      const projLen=len(b)*c;
+      const F=mul(u,projLen);
+      // 投影段
+      const pcol = Math.abs(c)<0.04 ? '#FFD666' : (c>0?CR:'#8B93FF');
+      line3([0,0,0],F,pcol,6);
+      line3(b,F,'rgba(255,255,255,.32)',1.3,[5,4]);
+      rightAngle(F,unit(sub(b,F)),projLen>=0?u:mul(u,-1),'rgba(255,255,255,.35)',.32);
+      // 角弧
+      const ang=Math.acos(clamp(c,-1,1));
+      arc3([0,0,0],u,n,th<=Math.PI?th:-(2*Math.PI-th),1.35,'#FFD666',1.8);
+      arrow3([0,0,0],a,CA,3);
+      arrow3([0,0,0],b,CB,3);
+      text3(a,'a',CA,8,-6,15,700);
+      text3(b,'b',CB,8,-6,15,700);
+      text3(mul(add(unit(a),unit(b)),1.5),`θ = ${(ang*180/Math.PI).toFixed(0)}°`,'#FFD666',6,0,13,600);
+      text3(mul(F,.5),`|b|cos θ = ${fmt(projLen)}`,pcol,-10,22,12);
+    },
+    step(t){
+      const th=t*2*Math.PI, b=bOf(th), c=dot(a,b)/(len(a)*len(b));
+      if(Math.abs(c)<0.05) return '此刻 a · b = 0：两向量垂直，投影缩成一个点。';
+      return c>0 ? '夹角是锐角，投影与 a 同向，a · b > 0。' : '夹角是钝角，投影与 a 反向，a · b < 0。';
+    },
+    readout(t){
+      const th=t*2*Math.PI, b=bOf(th);
+      const d=dot(a,b), c=d/(len(a)*len(b));
+      return [['a','(4, 0, 0)'],['b',vstr(b)],['a · b',fmt(d,2)],['cos θ',fmt(c,3)],['θ',(Math.acos(clamp(c,-1,1))*180/Math.PI).toFixed(1)+'°']];
+    }
+  });
+})();
+
+/* 4. 向量积：方向与长度 */
+(function(){
+  const a=[4,0,0], u=[1,0,0], n=unit([0,.62,1]), lb=3;
+  function bOf(th){ return mul(add(mul(u,Math.cos(th)),mul(n,Math.sin(th))),lb); }
+  scenes.push({
+    sec:'N', tab:'向量积的方向与长度', dur:16,
+    title:'a × b 垂直于两者，长度是 |a||b| sin θ',
+    lede:'粉色向量始终垂直于 a 和 b 所在的平面（右手四指从 a 转向 b，拇指指向它）。当 b 转到与 a 平行时，平行四边形被压扁，叉积随之归零；当 b 与 a 垂直时最长。',
+    formula:'|<strong>a</strong> × <strong>b</strong>| = |<strong>a</strong>| |<strong>b</strong>| sin θ<br><strong>a</strong> × <strong>b</strong> = <strong>0</strong> ⟺ <strong>a</strong> ∥ <strong>b</strong>',
+    legend:[[CA,'a'],[CB,'b'],[CR,'a × b'],['rgba(255,111,168,.35)','面积 = |a × b|']],
+    trail(t){
+      const th=t*2*Math.PI, b=bOf(th), c=cross(a,b), L=len(c);
+      const out=[{key:'b',p:b,color:'rgba(79,216,196,.45)'}];
+      if(L>0.15) out.push({key:'c',p:mul(unit(c),Math.min(5.2,L*0.42)),color:'rgba(255,111,168,.6)',dots:true});
+      return out;
+    },
+    draw(t){
+      grid(); axes();
+      const th=t*2*Math.PI;
+      const b=bOf(th);
+      const c=cross(a,b);
+      const L=len(c);
+      // 平行四边形
+      poly3([[0,0,0],a,add(a,b),b],'rgba(255,111,168,.16)','rgba(255,111,168,.5)',1.2);
+      arrow3([0,0,0],a,CA,3);
+      arrow3([0,0,0],b,CB,3);
+      // 叉积（按比例缩放以适应画面）
+      const shown=mul(unit(c.every(v=>v===0)?[0,0,1]:c), Math.min(5.2, L*0.42));
+      if(L>0.15){
+        arrow3([0,0,0],shown,CR,3.2,12);
+        rightAngle([0,0,0],unit(a),unit(shown),'rgba(255,111,168,.55)',.42);
+        rightAngle([0,0,0],unit(b),unit(shown),'rgba(255,111,168,.55)',.42);
+        text3(shown,'a × b',CR,8,-6,14,700);
+      }else{
+        text3([0,0,1.2],'a × b = 0',CR,8,-6,14,700);
+      }
+      text3(a,'a',CA,8,-6,15,700);
+      text3(b,'b',CB,8,-6,15,700);
+    },
+    step(t){
+      const th=t*2*Math.PI, s=Math.abs(Math.sin(th));
+      if(s<0.06) return 'b 与 a 共线：平行四边形没有面积，a × b = 0。';
+      if(s>0.985) return 'b ⊥ a：此时 |a × b| 取到最大值 |a||b|。';
+      return t<0.5 ? '四指从 a 转向 b，拇指方向就是 a × b。' : 'b 转过 180° 后，a × b 翻到平面的另一侧。';
+    },
+    readout(t){
+      const th=t*2*Math.PI, b=bOf(th), c=cross(a,b);
+      return [['b',vstr(b)],['a × b',vstr(c)],['|a × b|',fmt(len(c),2)],['sin θ',fmt(Math.abs(Math.sin(th)),3)],['a · (a × b)','0（永远垂直）']];
+    }
+  });
+})();
+
+/* 5. 面积（课本 Example 38） */
+(function(){
+  const A=[-1,2,3], B=[2,1,4], C=[0,5,-1];
+  const AB=sub(B,A), AC=sub(C,A), N=cross(AB,AC);
+  scenes.push({
+    sec:'N', tab:'三角形与平行四边形面积', dur:13,
+    title:'三角形面积 = ½|AB × AC|',
+    lede:'课本 Example 38 的三点。先把三角形补成平行四边形（面积为 |AB × AC|），三角形正好是它的一半。法向量的长度就是这块平行四边形的面积。',
+    formula:'S<sub>△</sub> = ½ |<em>AB</em> × <em>AC</em>|<br>S<sub>▱</sub> = |<em>AB</em> × <em>AC</em>|',
+    legend:[[CA,'AB'],[CB,'AC'],['rgba(143,227,107,.4)','三角形'],[CR,'AB × AC 的方向']],
+    draw(t){
+      grid(); axes();
+      const s1=ease(seg(t,.03,.25)), s2=ease(seg(t,.25,.5)), s3=ease(seg(t,.55,.8)), s4=ease(seg(t,.82,1));
+      dot3(A,CD); text3(A,'A(−1, 2, 3)',CD,8,-8,12);
+      if(s1>0){arrow3(A,lerp3(A,B,s1),CA,2.8);}
+      if(s1>=1){dot3(B,CA);text3(B,'B(2, 1, 4)',CA,8,-8,12);}
+      if(s2>0){arrow3(A,lerp3(A,C,s2),CB,2.8);}
+      if(s2>=1){dot3(C,CB);text3(C,'C(0, 5, −1)',CB,8,16,12);}
+      if(s2>=1){
+        poly3([A,B,C],'rgba(143,227,107,.28)','rgba(143,227,107,.75)',1.4);
+      }
+      if(s3>0){
+        const D=add(A,add(AB,mul(AC,s3)));
+        poly3([B,D,add(A,mul(AC,s3))],'rgba(255,111,168,.16)','rgba(255,111,168,.45)',1.2);
+        if(s3>=1) text3(add(A,add(AB,AC)),'第四个顶点',CR,8,-8,12);
+      }
+      if(s4>0){
+        const nshow=add(A,mul(unit(N),4*s4));
+        arrow3(A,nshow,CR,3,12);
+        if(s4>=1){
+          rightAngle(A,unit(AB),unit(N),'rgba(255,111,168,.6)',.5);
+          rightAngle(A,unit(AC),unit(N),'rgba(255,111,168,.6)',.5);
+          text3(nshow,'AB × AC',CR,8,-6,13,700);
+        }
+      }
+    },
+    step:t=>t<.25?'AB = (3, −1, 1)':t<.55?'AC = (1, 3, −4)，三角形成形':t<.82?'补成平行四边形：面积恰是三角形的两倍':'法向量 AB × AC = (1, 13, 10)，其长度 √270 就是平行四边形的面积',
+    readout(){
+      return [['AB','(3, −1, 1)'],['AC','(1, 3, −4)'],['AB × AC','(1, 13, 10)'],['|AB × AC|','√270 ≈ 16.43'],['三角形面积','½√270 ≈ 8.22']];
+    }
+  });
+})();
+
+/* 6. 体积：平行六面体与四面体 */
+(function(){
+  const b=[4,0,0], c=[1,3,0], a=[1,1,3];
+  const N=cross(b,c);            // (0,0,12)
+  const V=Math.abs(dot(a,N));    // 36
+  scenes.push({
+    sec:'N', tab:'平行六面体与四面体体积', dur:16,
+    title:'体积 = 底面积 × 高 = |a · (b × c)|',
+    lede:'b × c 既给出底面平行四边形的面积，又给出底面的法线方向。把 a 投影到这条法线上就是高，两者相乘就是标量三重积。四面体只占其中的六分之一。',
+    formula:'V<sub>平行六面体</sub> = |<strong>a</strong> · (<strong>b</strong> × <strong>c</strong>)|<br>V<sub>四面体</sub> = ⅙ |<strong>a</strong> · (<strong>b</strong> × <strong>c</strong>)|',
+    legend:[[CB,'b、c（底面）'],[CR,'b × c'],[CA,'a'],['rgba(245,179,63,.3)','高 = a 在法线上的投影']],
+    draw(t){
+      grid(); axes();
+      const s1=ease(seg(t,.03,.22)), s2=ease(seg(t,.24,.42)), s3=ease(seg(t,.44,.62)), s4=ease(seg(t,.66,.92));
+      // 底面
+      if(s1>0){
+        arrow3([0,0,0],mul(b,s1),CB,2.8);
+        arrow3([0,0,0],mul(c,s1),CB,2.8);
+      }
+      if(s1>=1){
+        poly3([[0,0,0],b,add(b,c),c],'rgba(79,216,196,.18)','rgba(79,216,196,.6)',1.4);
+        text3(b,'b',CB,8,14,15,700); text3(c,'c',CB,-4,18,15,700);
+        text3(mul(add(b,c),.5),'底面积 = |b × c| = 12',CB,-30,26,12);
+      }
+      // 法向量
+      if(s2>0){
+        arrow3([0,0,0],mul(unit(N),4.2*s2),CR,3,12);
+        if(s2>=1) text3(mul(unit(N),4.2),'b × c = (0, 0, 12)',CR,10,-6,13,700);
+      }
+      // a 与高
+      if(s3>0){
+        arrow3([0,0,0],mul(a,s3),CA,3);
+        if(s3>=1){
+          const foot=[a[0],a[1],0];
+          line3(a,foot,'rgba(245,179,63,.6)',1.4,[5,4]);
+          line3([0,0,0],mul(unit(N),a[2]),'rgba(245,179,63,.9)',5);
+          rightAngle(foot,[0,0,1],unit(sub([0,0,0],foot)),'rgba(245,179,63,.5)',.35);
+          text3(a,'a',CA,8,-8,15,700);
+          text3(mul(unit(N),a[2]/2),'高 = 3',CA,-46,4,12);
+        }
+      }
+      // 平行六面体
+      if(s4>0){
+        const top=mul(a,s4);
+        const base=[[0,0,0],b,add(b,c),c];
+        const up=base.map(p=>add(p,top));
+        poly3(up,'rgba(255,255,255,.09)','rgba(255,255,255,.35)',1.2);
+        for(let i=0;i<4;i++){
+          line3(base[i],up[i],'rgba(255,255,255,.3)',1.2);
+        }
+        poly3([base[1],base[2],up[2],up[1]],'rgba(255,255,255,.05)');
+      }
+    },
+    step:t=>t<.24?'底面由 b 与 c 张成':t<.44?'b × c 垂直于底面，其长度 12 就是底面积':t<.66?'a 在法线方向上的投影 = 高 = 3':'扫出整个平行六面体：V = 12 × 3 = 36，四面体是它的 1/6 = 6',
+    readout(){
+      return [['b','(4, 0, 0)'],['c','(1, 3, 0)'],['a','(1, 1, 3)'],['b × c','(0, 0, 12)'],['a · (b × c)','36'],['四面体体积','36 ÷ 6 = 6']];
+    }
+  });
+})();
+
+/* 7. 两张平面相交：解空间与 rank 塌陷 */
+(function(){
+  const a=[4,0,0], u=[1,0,0], n=unit([0,.62,1]), lb=3, TH0=105*Math.PI/180;
+  const thOf=t=>TH0*(1+Math.cos(2*Math.PI*t))/2;
+  const bOf=th=>mul(add(mul(u,Math.cos(th)),mul(n,Math.sin(th))),lb);
+  scenes.push({
+    sec:'N', tab:'两平面相交：解空间', dur:15,
+    title:'课本没挑明的那一步：a × b 就是 Ax = 0 的解',
+    lede:'“同时垂直于 a 和 b”写出来是两个方程 a·x = 0 与 b·x = 0，每个方程是一张过原点的平面。两张平面相交成一条直线，那条线就是 a × b 的方向——课本 p.310 消元消出来的 t，就是这条线上的参数。b 转到与 a 平行时，两张平面重合，交线塌成整张平面，叉积同时归零。',
+    formula:'<em>a</em>₁<em>x</em> + <em>a</em>₂<em>y</em> + <em>a</em>₃<em>z</em> = 0<br><em>b</em>₁<em>x</em> + <em>b</em>₂<em>y</em> + <em>b</em>₃<em>z</em> = 0<br>解 = <em>k</em>(<strong>a</strong> × <strong>b</strong>)',
+    legend:[[CA,'a 与它的垂面'],[CB,'b 与它的垂面'],[CR,'交线 = 解空间']],
+    draw(t){
+      grid(); axes();
+      const th=thOf(t), b=bOf(th), c=cross(a,b), L=len(c);
+      const collapsed=L<0.9;
+      if(collapsed){
+        planeQuad([0,0,0],a,4.6,'rgba(255,111,168,.20)','rgba(255,111,168,.5)');
+      }else{
+        planeQuad([0,0,0],a,4.6,'rgba(245,179,63,.09)','rgba(245,179,63,.38)');
+        planeQuad([0,0,0],b,4.6,'rgba(79,216,196,.09)','rgba(79,216,196,.38)');
+        const d=unit(c);
+        line3(mul(d,-4.6),mul(d,4.6),CR,3.4);
+        const shown=mul(d,Math.min(4.4,L*0.4));
+        arrow3([0,0,0],shown,CR,3,12);
+        text3(shown,'a × b',CR,8,-6,14,700);
+      }
+      arrow3([0,0,0],a,CA,3); text3(a,'a',CA,8,-8,15,700);
+      arrow3([0,0,0],b,CB,3); text3(b,'b',CB,8,-8,15,700);
+      if(collapsed) text3([0,0,3.4],'两个方程重合 → 解是整张平面',CR,-70,0,13,700);
+    },
+    step(t){
+      const th=thOf(t), L=len(cross(a,bOf(th)));
+      if(L<0.9) return 'rank A 掉到 1：两个方程其实是同一个，解空间从 1 维涨到 2 维，a × b = 0。';
+      return t<0.5 ? '两张平面相交成一条直线：解空间 1 维，取 t = 1 就得到课本那组分量。'
+                   : 'b 转回来，两张平面重新分开，交线恢复成一条。';
+    },
+    readout(t){
+      const th=thOf(t), b=bOf(th), c=cross(a,b), L=len(c), collapsed=L<0.9;
+      return [['b',vstr(b)],['a × b',vstr(c)],['|a × b|',fmt(L,2)],
+              ['rank A',collapsed?'1':'2'],['解空间维数',collapsed?'2（整张平面）':'1（一条直线）'],
+              ['θ',(th*180/Math.PI).toFixed(1)+'°']];
+    }
+  });
+})();
+
+/* 8. 练习 12L Q17（p.305）：一个方程 → 解空间是平面 */
+(function(){
+  const N=[1,2,-1];
+  const e1=unit(cross(N,[0,0,1])), e2=unit(cross(N,e1));
+  const P=[2,-1,0], Q=[1,0,1];
+  scenes.push({
+    sec:'Q17', tab:'练习 12L Q17', dur:14,
+    title:'12L Q17：找两个不平行、且都垂直于 (1, 2, −1) 的向量',
+    lede:'题目问“任意两个”，因为答案本来就有无穷多个。只有一个方程 x + 2y − z = 0，解空间是一整张过原点的平面；平面上任取两个不共线的向量都对。课本给的 (2, −1, 0) 与 (1, 0, 1) 只是其中两个。',
+    formula:'<strong>n</strong> · <strong>x</strong> = 0 ⟹ <em>x</em> + 2<em>y</em> − <em>z</em> = 0<br>一个方程 · 三个未知数 → 解空间 2 维',
+    legend:[[CA,'n = (1, 2, −1)'],['rgba(255,111,168,.35)','解空间：整张平面'],[CB,'扫动的解'],[CG,'课本的两个答案']],
+    draw(t){
+      grid(); axes();
+      planeQuad([0,0,0],N,4.4,'rgba(255,111,168,.16)','rgba(255,111,168,.42)');
+      const ph=t*2*Math.PI;
+      const w=mul(add(mul(e1,Math.cos(ph)),mul(e2,Math.sin(ph))),3.4);
+      arrow3([0,0,0],w,CB,2.8);
+      rightAngle([0,0,0],unit(w),unit(N),'rgba(79,216,196,.6)',.45);
+      arrow3([0,0,0],mul(unit(N),3.2),CA,3);
+      text3(mul(unit(N),3.2),'n',CA,8,-8,15,700);
+      arrow3([0,0,0],P,CG,2.6); dot3(P,CG); text3(P,'(2, −1, 0)',CG,8,16,12);
+      arrow3([0,0,0],Q,CG,2.6); dot3(Q,CG); text3(Q,'(1, 0, 1)',CG,8,-8,12);
+    },
+    step:t=>'蓝色向量绕着平面转一圈，任何一个位置都满足 n · x = 0 —— 这就是“有无穷多个答案”的样子。',
+    readout(t){
+      const ph=t*2*Math.PI;
+      const w=mul(add(mul(e1,Math.cos(ph)),mul(e2,Math.sin(ph))),3.4);
+      return [['n','(1, 2, −1)'],['扫动的解 x',vstr(w)],['n · x',fmt(dot(N,w),3)],
+              ['rank A','1'],['解空间维数','2'],['课本答案','(2, −1, 0)、(1, 0, 1)']];
+    }
+  });
+})();
+
+/* 9. 练习 12N.1 Q11（p.313）：解空间是一条线，再定长度 */
+(function(){
+  const a=[2,3,-1], b=[1,-2,2];
+  const c=cross(a,b);            // (4, -5, -7)
+  const L=len(c);                // √90
+  const k=5/L;
+  scenes.push({
+    sec:'Q11', tab:'练习 12N.1 Q11', dur:15,
+    title:'12N.1 Q11：先求所有垂直向量，再挑出长度为 5 的两个',
+    lede:'两个方程 → 解空间是一条直线，全部答案写成 k(4, −5, −7)。题目再加一个“长度 = 5”的条件，就在这条线上定出两个点：正反各一个。这也是课本 Example 26、Example 30 一直在用的套路——先定方向，再定长度。',
+    formula:'<strong>a</strong> × <strong>b</strong> = (4, −5, −7),&nbsp; |<strong>a</strong> × <strong>b</strong>| = √90<br><strong>v</strong> = ± (5/√90)(4, −5, −7)',
+    legend:[[CA,'a = (2, 3, −1)'],[CB,'b = (1, −2, 2)'],[CR,'a × b'],[CG,'长度为 5 的两个答案']],
+    draw(t){
+      grid(); axes();
+      const s1=ease(seg(t,.03,.22)), s2=ease(seg(t,.24,.46)), s3=ease(seg(t,.5,.74)), s4=ease(seg(t,.78,1));
+      if(s1>0){ arrow3([0,0,0],mul(a,s1),CA,3); arrow3([0,0,0],mul(b,s1),CB,3); }
+      if(s1>=1){ text3(a,'a',CA,8,-8,15,700); text3(b,'b',CB,8,14,15,700); }
+      if(s1>=1) poly3([[0,0,0],a,add(a,b),b],'rgba(255,111,168,.12)','rgba(255,111,168,.4)',1.1);
+      if(s2>0){
+        arrow3([0,0,0],mul(c,s2),CR,3,12);
+        if(s2>=1) text3(c,'a × b = (4, −5, −7)',CR,8,14,13,700);
+      }
+      if(s3>0){
+        const f=1+(k-1)*s3;
+        line3([0,0,0],mul(unit(c),-5.4),'rgba(255,111,168,.35)',1.2,[5,4]);
+        arrow3([0,0,0],mul(c,f),CG,3.4,12);
+        if(s3>=1) text3(mul(c,k),'长度 5',CG,10,-8,13,700);
+      }
+      if(s4>0){
+        arrow3([0,0,0],mul(c,-k*s4),CG,3.4,12);
+        if(s4>=1) text3(mul(c,-k),'另一个方向',CG,-70,14,12);
+      }
+    },
+    step:t=>t<.24?'先画出 a 与 b':t<.5?'a × b = (4, −5, −7)：所有垂直向量都是它的倍数 k(4, −5, −7)':t<.78?'除以 √90 变成单位向量，再乘 5 —— 长度锁定':'反方向那个同样满足条件，所以答案有两个',
+    readout(){
+      return [['a × b','(4, −5, −7)'],['|a × b|','√90 = 3√10 ≈ 9.49'],['所有垂直向量','k(4, −5, −7), k ≠ 0'],
+              ['缩放系数','5/√90 = √10/6 ≈ 0.527'],['答案','±(2.11, −2.64, −3.69)']];
+    }
+  });
+})();
+
+/* 10. b 绕 a 转圆锥：a × b 的尖端画出一个圆 */
+(function(){
+  const a=[4,0,0], ah=[1,0,0], e1=[0,1,0], e2=[0,0,1], lb=3, TH=55*Math.PI/180;
+  const bOf=ph=>mul(add(mul(ah,Math.cos(TH)),mul(add(mul(e1,Math.cos(ph)),mul(e2,Math.sin(ph))),Math.sin(TH))),lb);
+  const R=len(a)*lb*Math.sin(TH);
+  const SC=4.6/R;
+  scenes.push({
+    sec:'N', tab:'圆锥扫掠：叉积画圆', dur:14,
+    title:'θ 不变、b 绕 a 转：a × b 长度锁死，方向转一圈',
+    lede:'b 保持与 a 成 55° 绕着 a 旋转，尖端画出一个圆锥的底圈。此时 |a × b| = |a||b| sin θ 完全不变，所以叉积的尖端也画一个圆——半径就是那个平行四边形的面积，圆面垂直于 a。力矩、角动量的图像就是这个。',
+    formula:'|<strong>a</strong> × <strong>b</strong>| = |<strong>a</strong>| |<strong>b</strong>| sin θ = 常数<br>方向绕 <strong>a</strong> 旋转一周',
+    legend:[[CA,'a（旋转轴）'],[CB,'b 的圆锥轨迹'],[CR,'a × b：垂直于 a 的圆']],
+    trail(t){
+      const ph=t*2*Math.PI, b=bOf(ph), c=cross(a,b);
+      return [{key:'b',p:b,color:'rgba(79,216,196,.5)'},
+              {key:'c',p:mul(c,SC),color:'rgba(255,111,168,.6)',dots:true}];
+    },
+    draw(t){
+      grid(); axes();
+      const ph=t*2*Math.PI, b=bOf(ph), c=cross(a,b);
+      poly3([[0,0,0],a,add(a,b),b],'rgba(255,111,168,.13)','rgba(255,111,168,.4)',1.1);
+      line3([0,0,0],mul(ah,lb*Math.cos(TH)),'rgba(245,179,63,.5)',1.2,[4,4]);
+      arrow3([0,0,0],a,CA,3); text3(a,'a',CA,8,-8,15,700);
+      arrow3([0,0,0],b,CB,3); text3(b,'b',CB,8,-8,15,700);
+      const shown=mul(c,SC);
+      arrow3([0,0,0],shown,CR,3.2,12);
+      rightAngle([0,0,0],ah,unit(shown),'rgba(255,111,168,.5)',.45);
+      text3(shown,'a × b',CR,8,-6,14,700);
+    },
+    step:t=>'注意粉色尖端画的是一个正圆：长度一直是 |a||b|sin 55° ≈ 9.83，只有方向在转。',
+    readout(t){
+      const ph=t*2*Math.PI, b=bOf(ph), c=cross(a,b);
+      return [['θ','55°（保持不变）'],['b',vstr(b)],['a × b',vstr(c)],
+              ['|a × b|',fmt(len(c),2)+'（常数）'],['φ（绕 a 的角）',(ph*180/Math.PI).toFixed(0)+'°']];
+    }
+  });
+})();
+
+/* 11. b 沿 a 方向滑动：a × b 纹丝不动 */
+(function(){
+  const a=[4,0,0], b0=[0,2.6,1.6];
+  const C=cross(a,b0);
+  const SC=4.6/len(C);
+  const kOf=t=>1.25*Math.sin(2*Math.PI*t);
+  scenes.push({
+    sec:'N', tab:'错切不变：a × b 不动', dur:14,
+    title:'b 沿着 a 的方向滑动，叉积一点都不变',
+    lede:'把 b 换成 b + k a，平行四边形被切得越来越歪，但底和高都没变，面积不变；叉积的方向也不变，所以粉色向量整段动画里一动不动。这就是 a × (b + k a) = a × b —— 叉积对 b 里"沿 a 那一截"完全免疫，只认垂直分量。第 3 个动画里的点积恰好相反，只认平行分量。',
+    formula:'<strong>a</strong> × (<strong>b</strong> + <em>k</em><strong>a</strong>) = <strong>a</strong> × <strong>b</strong> + <em>k</em>(<strong>a</strong> × <strong>a</strong>) = <strong>a</strong> × <strong>b</strong>',
+    legend:[[CA,'a'],[CB,'b + k a（尖端走直线）'],[CR,'a × b：固定不动'],[CG,'高：始终相等']],
+    trail(t){
+      const b=add(b0,mul(a,kOf(t)));
+      return [{key:'b',p:b,color:'rgba(79,216,196,.5)'}];
+    },
+    draw(t){
+      grid(); axes();
+      const k=kOf(t), b=add(b0,mul(a,k));
+      poly3([[0,0,0],a,add(a,b),b],'rgba(255,111,168,.14)','rgba(255,111,168,.45)',1.2);
+      const foot=[b[0],0,0];
+      line3(b,foot,CG,2,[5,4]);
+      rightAngle(foot,[0,0,1],[-1,0,0],'rgba(143,227,107,.6)',.35);
+      text3(lerp3(b,foot,.5),'高 ≈ 3.05',CG,10,0,12);
+      arrow3([0,0,0],a,CA,3); text3(a,'a',CA,8,16,15,700);
+      arrow3([0,0,0],b,CB,3); text3(b,'b + k a',CB,8,-8,14,700);
+      const shown=mul(C,SC);
+      arrow3([0,0,0],shown,CR,3.2,12);
+      text3(shown,'a × b（不动）',CR,8,-6,14,700);
+    },
+    step:t=>'盯着粉色向量：平行四边形一直在歪，它的长度和方向都没有任何变化。',
+    readout(t){
+      const k=kOf(t), b=add(b0,mul(a,k));
+      return [['k',fmt(k,2)],['b + k a',vstr(b)],['a × b','(0, −6.4, 10.4)（恒定）'],
+              ['|a × b|',fmt(len(C),2)+'（恒定）'],['高 = |a × b| / |a|',fmt(len(C)/len(a),2)]];
+    }
+  });
+})();
+
+/* ---------- UI ---------- */
+const tabsEl=document.getElementById('tabs');
+const elTitle=document.getElementById('s-title');
+const elLede=document.getElementById('s-lede');
+const elFormula=document.getElementById('s-formula');
+const elStep=document.getElementById('s-step');
+const elRead=document.getElementById('s-readout');
+const elLegend=document.getElementById('s-legend');
+const scrub=document.getElementById('scrub');
+const tlabel=document.getElementById('tlabel');
+const playBtn=document.getElementById('play');
+
+let cur=0, t=0, playing=!window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+if(!playing) playBtn.textContent='播放';
+
+scenes.forEach((s,i)=>{
+  const btn=document.createElement('button');
+  btn.setAttribute('role','tab');
+  btn.innerHTML=`<span class="sec">${s.sec}</span><span>${s.tab}</span>`;
+  btn.addEventListener('click',()=>select(i));
+  tabsEl.appendChild(btn);
+});
+
+function select(i){
+  cur=i; t=0; clearTrails();
+  const s=scenes[i];
+  [...tabsEl.children].forEach((b,k)=>b.setAttribute('aria-selected',k===i?'true':'false'));
+  elTitle.textContent=s.title;
+  elLede.textContent=s.lede;
+  elFormula.innerHTML=s.formula;
+  elLegend.innerHTML=s.legend.map(([c,txt])=>
+    `<span><i class="swatch" style="background:${c}"></i>${txt}</span>`).join('');
+}
+
+function syncPanel(){
+  const s=scenes[cur];
+  elStep.textContent=typeof s.step==='function'?s.step(t):s.step;
+  elRead.innerHTML=s.readout(t).map(([k,v])=>
+    `<div class="row"><span class="k">${k}</span><span class="v">${v}</span></div>`).join('');
+  scrub.value=Math.round(t*1000);
+  tlabel.textContent=Math.round(t*100)+'%';
+}
+
+playBtn.addEventListener('click',()=>{
+  playing=!playing;
+  playBtn.textContent=playing?'暂停':'播放';
+});
+scrub.addEventListener('input',()=>{
+  playing=false; playBtn.textContent='播放';
+  t=scrub.value/1000; clearTrails();
+});
+document.getElementById('trail').addEventListener('click',e=>{
+  trailOn=!trailOn; clearTrails();
+  e.currentTarget.textContent='留痕：'+(trailOn?'开':'关');
+});
+document.getElementById('reset').addEventListener('click',()=>{cam={...DEF};});
+
+/* 轨道控制 */
+let drag=null;
+cv.addEventListener('pointerdown',e=>{drag={x:e.clientX,y:e.clientY};cv.setPointerCapture(e.pointerId);});
+cv.addEventListener('pointermove',e=>{
+  if(!drag) return;
+  cam.az-=(e.clientX-drag.x)*0.008;
+  cam.el=clamp(cam.el+(e.clientY-drag.y)*0.006,-1.4,1.45);
+  drag={x:e.clientX,y:e.clientY};
+});
+cv.addEventListener('pointerup',()=>drag=null);
+cv.addEventListener('pointercancel',()=>drag=null);
+cv.addEventListener('dblclick',()=>{cam={...DEF};});
+cv.addEventListener('wheel',e=>{
+  e.preventDefault();
+  cam.dist=clamp(cam.dist*(1+Math.sign(e.deltaY)*0.09),6,42);
+},{passive:false});
+
+/* ---------- 主循环 ---------- */
+let last=performance.now();
+function frame(now){
+  const dt=Math.min((now-last)/1000,0.05); last=now;
+  const s=scenes[cur];
+  if(playing){
+    t+=dt/s.dur;
+    if(t>=1){ t-=1; clearTrails(); }   /* 扫满一周，清除上一圈的痕迹 */
+  }
+  resizeIfNeeded();
+  setBasis();
+  ctx.clearRect(0,0,W,H);
+  recordTrails(s,t);
+  s.draw(t);
+  drawTrails();
+  syncPanel();
+  requestAnimationFrame(frame);
+}
+let lastW=0,lastH=0;
+function resizeIfNeeded(){
+  const r=cv.parentElement.getBoundingClientRect();
+  if(Math.abs(r.width-lastW)>0.5||Math.abs(r.height-lastH)>0.5){
+    lastW=r.width; lastH=r.height; resize();
+  }
+}
+resize();
+select(0);
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

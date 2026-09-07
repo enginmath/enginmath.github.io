@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>太阳移动，阴影落地 · 向量在建筑日照里的用法</title>
+<style>
+:root{
+  --field:#0f1826;--panel:#16223a;--panel-2:#1c2b47;--line:#2a3c5e;
+  --fg:#e6ecf5;--fg-dim:#93a4c0;
+  --amber:#f0a63c;--amber-soft:#f7c579;--violet:#b388ff;--violet-soft:#d3bcff;
+  --cyan:#3ec8d8;--coral:#ef6a5e;--blue:#5aa9f0;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:
+    radial-gradient(1100px 480px at 12% -12%, #22243f 0%, transparent 60%),
+    radial-gradient(900px 460px at 90% 110%, #2a2434 0%, transparent 62%),
+    var(--field);
+  color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  font-size:15px;line-height:1.6;min-height:100vh;
+}
+.masthead{padding:22px 26px 14px;border-bottom:1px solid var(--line);
+  display:flex;flex-wrap:wrap;align-items:baseline;gap:14px 22px}
+.masthead h1{font-family:Georgia,"Songti SC","Noto Serif CJK SC",serif;font-size:23px;font-weight:600;margin:0}
+.masthead p{margin:0;color:var(--fg-dim);font-size:13.5px;max-width:64ch}
+
+.math-strip{display:flex;gap:10px;flex-wrap:wrap;padding:12px 26px;border-bottom:1px solid var(--line);
+  font-size:12.5px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:var(--fg-dim)}
+.math-strip span{padding:3px 10px;border:1px solid var(--line);border-radius:2px;background:var(--panel)}
+.math-strip .d{color:var(--amber-soft);border-color:#6b5220}
+.math-strip .x{color:var(--violet-soft);border-color:#4a3a6e}
+
+.stage{display:grid;grid-template-columns:1.25fr 1fr;align-items:stretch}
+.side{padding:20px 24px 26px;min-width:0}
+.side.left{border-right:1px solid var(--line)}
+.side-head{display:flex;align-items:baseline;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+.side-head h2{font-family:Georgia,"Songti SC",serif;font-size:18px;margin:0;font-weight:600}
+.side.left .side-head h2{color:var(--amber-soft)}
+.side.right .side-head h2{color:var(--violet-soft)}
+.side-head .eq{font-size:13px;color:var(--fg-dim);
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+
+.viewport{position:relative;width:100%;border:1px solid var(--line);border-radius:3px;overflow:hidden;touch-action:none}
+#vp3d{aspect-ratio:16/11;min-height:320px;cursor:grab;background:#0d1522;transition:background .5s linear}
+#vp3d:active{cursor:grabbing}
+#vpPlan{aspect-ratio:1/1;min-height:300px;background:#0c131f}
+.viewport canvas{display:block;width:100%;height:100%}
+.hint{position:absolute;left:10px;bottom:8px;font-size:11.5px;color:#7d8ea8;pointer-events:none}
+.tag{position:absolute;right:10px;top:9px;font-size:11.5px;color:#7d8ea8;pointer-events:none;
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.night{position:absolute;inset:0;display:none;align-items:center;justify-content:center;
+  background:rgba(8,13,24,.78);color:var(--cyan);font-size:15px;text-align:center;padding:20px;line-height:1.8}
+.night.on{display:flex}
+
+.dials{margin-top:14px;display:grid;grid-template-columns:repeat(auto-fit,minmax(112px,1fr));
+  gap:1px;background:var(--line);border:1px solid var(--line);border-radius:3px;overflow:hidden}
+.dial{background:var(--panel);padding:10px 12px}
+.dial .k{font-size:11.5px;color:var(--fg-dim);display:block;margin-bottom:2px}
+.dial .v{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  font-size:19px;font-variant-numeric:tabular-nums;line-height:1.25}
+.dial.sun .v{color:var(--amber)}
+.dial.geo .v{color:var(--violet)}
+
+.controls{margin-top:16px;display:grid;gap:12px}
+.ctl{display:grid;grid-template-columns:92px 1fr 78px;align-items:center;gap:12px}
+.ctl label{font-size:13.5px;color:var(--fg-dim)}
+.ctl output{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13px;
+  text-align:right;font-variant-numeric:tabular-nums}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:22px;background:transparent;margin:0}
+input[type=range]::-webkit-slider-runnable-track{height:2px;background:var(--line);border-radius:2px}
+input[type=range]::-moz-range-track{height:2px;background:var(--line);border-radius:2px}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:15px;height:15px;border-radius:50%;
+  margin-top:-6.5px;border:none;cursor:pointer;background:var(--amber)}
+input[type=range]::-moz-range-thumb{width:15px;height:15px;border-radius:50%;border:none;cursor:pointer;background:var(--amber)}
+.side.right input[type=range]::-webkit-slider-thumb{background:var(--violet)}
+.side.right input[type=range]::-moz-range-thumb{background:var(--violet)}
+input:focus-visible,button:focus-visible{outline:2px solid var(--fg);outline-offset:3px;border-radius:3px}
+
+.switch-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:13.5px;color:var(--fg-dim)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:3px;overflow:hidden}
+.seg button{background:transparent;border:none;color:var(--fg-dim);font:inherit;font-size:12.5px;
+  padding:5px 11px;cursor:pointer}
+.seg button[aria-pressed=true]{background:var(--panel-2);color:var(--fg)}
+.play{background:var(--panel);border:1px solid var(--line);color:var(--fg);font:inherit;font-size:13px;
+  padding:5px 15px;border-radius:3px;cursor:pointer}
+.play[aria-pressed=true]{background:var(--amber);color:#231603;border-color:var(--amber)}
+.check{display:inline-flex;align-items:center;gap:7px;cursor:pointer;color:var(--fg-dim)}
+.check input{accent-color:var(--violet);width:15px;height:15px}
+
+.calc{margin-top:14px;border:1px solid var(--line);border-radius:3px;background:var(--panel);
+  padding:11px 13px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  font-size:12.5px;color:var(--fg-dim);line-height:1.9}
+.calc b{color:var(--fg);font-weight:600}
+.calc .hl-d{color:var(--amber-soft)}
+.calc .hl-x{color:var(--violet-soft)}
+
+.notes{border-top:1px solid var(--line);padding:24px 26px 40px;
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:26px 34px}
+.notes section h3{font-family:Georgia,"Songti SC",serif;font-size:16px;margin:0 0 6px;font-weight:600}
+.notes section p{margin:0;color:var(--fg-dim);font-size:13.5px;max-width:52ch}
+.notes .k-amber{color:var(--amber-soft)}
+.notes .k-violet{color:var(--violet-soft)}
+.notes code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12.5px;
+  color:var(--fg);background:var(--panel-2);padding:1px 5px;border-radius:2px}
+.fallback{padding:40px 26px;color:var(--coral)}
+
+@media (max-width:960px){
+  .stage{grid-template-columns:1fr}
+  .side.left{border-right:none;border-bottom:1px solid var(--line)}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+<style>
+.backbar{
+  display:flex;align-items:center;gap:.55rem;
+  padding:9px 26px;border-bottom:1px solid var(--line,#2a3c5e);
+  font-size:13px;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif;
+}
+.backbar a{color:#93a4c0;text-decoration:none;border-bottom:1px solid transparent}
+.backbar a:hover{color:#e6ecf5;border-bottom-color:#e6ecf5}
+.backbar .sep{color:#3d5170}
+</style>
+</head>
+<body>
+<div class="backbar">
+  <a href="vectors.html">&larr; 向量与空间　Vectors</a>
+  <span class="sep">·</span>
+  <a href="index.html">看得见的数学　Home</a>
+</div>
+
+
+<header class="masthead">
+  <h1>太阳移动，阴影落地</h1>
+  <p>一栋楼，一天的日照。拖动时间看阴影扫过地面——每一步都是前面学过的向量运算在干活。</p>
+</header>
+
+<div class="math-strip">
+  <span class="d">太阳方向 L：由高度角与方位角合成</span>
+  <span class="d">投影落点：t = P·n ⁄ (L·n)</span>
+  <span class="x">墙面法线：n = e₁ × e₂</span>
+  <span class="d">墙面明暗：max(0, N·L)</span>
+  <span class="x">阴影面积：½|Σ Pᵢ × Pᵢ₊₁|</span>
+</div>
+
+<main class="stage">
+
+  <!-- ============ 左：三维场景 ============ -->
+  <div class="side left">
+    <div class="side-head">
+      <h2>日照 · 点积</h2>
+      <span class="eq">每个顶点沿 −L 射向地面，交点就是影子</span>
+    </div>
+
+    <div class="viewport" id="vp3d">
+      <canvas id="cv3d"></canvas>
+      <span class="hint">拖动旋转 · 滚轮缩放</span>
+      <span class="tag" id="dirTag">正南</span>
+      <div class="night" id="nightMsg">太阳在地平线以下<br>L·n ≤ 0，射线打不到地面，没有影子</div>
+    </div>
+
+    <div class="dials">
+      <div class="dial sun"><span class="k">太阳高度角 α</span><span class="v" id="dAlt">—</span></div>
+      <div class="dial sun"><span class="k">方位角（自北）</span><span class="v" id="dAz">—</span></div>
+      <div class="dial sun"><span class="k">影长</span><span class="v" id="dLen">—</span></div>
+      <div class="dial sun"><span class="k">日照时长</span><span class="v" id="dDay">—</span></div>
+    </div>
+
+    <div class="controls">
+      <div class="ctl">
+        <label for="sTime">时刻</label>
+        <input type="range" id="sTime" min="0" max="24" step="0.05" value="9.5">
+        <output id="oTime">09:30</output>
+      </div>
+      <div class="ctl">
+        <label for="sDay">日期</label>
+        <input type="range" id="sDay" min="1" max="365" step="1" value="355">
+        <output id="oDay">12月21日</output>
+      </div>
+      <div class="ctl">
+        <label for="sLat">纬度</label>
+        <input type="range" id="sLat" min="-60" max="60" step="1" value="35">
+        <output id="oLat">35°N</output>
+      </div>
+      <div class="switch-row">
+        <button class="play" id="btnPlay" aria-pressed="false">▶ 播放一天</button>
+        <span class="seg" role="group" aria-label="节气">
+          <button data-day="355" aria-pressed="true">冬至</button>
+          <button data-day="80" aria-pressed="false">春分</button>
+          <button data-day="172" aria-pressed="false">夏至</button>
+        </span>
+        <label class="check"><input type="checkbox" id="cDial"> 立一个日晷</label>
+      </div>
+      <div class="calc" id="dialBox" style="display:none"></div>
+    </div>
+  </div>
+
+  <!-- ============ 右：平面图 ============ -->
+  <div class="side right">
+    <div class="side-head">
+      <h2>平面图 · 叉积</h2>
+      <span class="eq">阴影多边形的面积由鞋带公式给出</span>
+    </div>
+
+    <div class="viewport" id="vpPlan">
+      <canvas id="cvPlan"></canvas>
+      <span class="tag">俯视 · 北在上</span>
+    </div>
+
+    <div class="dials">
+      <div class="dial geo"><span class="k">阴影面积</span><span class="v" id="dArea">—</span></div>
+      <div class="dial geo"><span class="k">阴影顶点数</span><span class="v" id="dVerts">—</span></div>
+    </div>
+
+    <div class="controls">
+      <div class="ctl">
+        <label for="sH">楼高</label>
+        <input type="range" id="sH" min="6" max="90" step="1" value="36">
+        <output id="oH">36 m</output>
+      </div>
+      <div class="ctl">
+        <label for="sW">面宽</label>
+        <input type="range" id="sW" min="8" max="60" step="1" value="30">
+        <output id="oW">30 m</output>
+      </div>
+      <div class="ctl">
+        <label for="sD">进深</label>
+        <input type="range" id="sD" min="6" max="40" step="1" value="14">
+        <output id="oD">14 m</output>
+      </div>
+      <div class="switch-row">
+        <label class="check"><input type="checkbox" id="cEnvelope" checked> 画出全天阴影包络</label>
+      </div>
+    </div>
+
+    <div class="calc" id="calcBox"></div>
+  </div>
+
+</main>
+
+<div class="notes">
+  <section>
+    <h3 class="k-amber">影子是一次射线与平面求交</h3>
+    <p>楼顶某个角点 P，沿着背离太阳的方向 <code>−L</code> 一直走，撞到地面的那一点就是它的影子。地面法向 <code>n = (0,1,0)</code>，交点参数 <code>t = (P·n)/(L·n)</code>，落点 <code>P′ = P − tL</code>。分母正是一个点积——太阳越低，<code>L·n</code> 越接近零，影子就越长，日出日落瞬间趋于无穷。</p>
+  </section>
+  <section>
+    <h3 class="k-amber">墙面明暗还是 N·L</h3>
+    <p>四面墙加屋顶，各自有一个法线。哪面亮、哪面暗，就看 <code>max(0, N·L)</code>——和上一个演示里的兰伯特光照、再上一个里的电通量，是同一个公式。转到中午你会看到屋顶最亮；早晨东墙亮西墙黑，傍晚正好反过来。</p>
+  </section>
+  <section>
+    <h3 class="k-violet">阴影面积靠叉积</h3>
+    <p>影子是个不规则多边形，没有面积公式可套。但把顶点按顺序两两做叉积再求和，<code>S = ½|Σ Pᵢ × Pᵢ₊₁|</code>，面积就出来了——这就是测绘和 GIS 里的鞋带公式，本质是把多边形拆成一堆以原点为顶点的三角形，每个三角形的有向面积正是一个叉积，正负相消后剩下的就是真实面积。</p>
+  </section>
+  <section>
+    <h3 class="k-amber">日晷：为什么晷针要斜着插</h3>
+    <p>勾上"立一个日晷"。晷针的方向是 <code>(0, sin φ, −cos φ)</code>——正好平行于地轴，指向天极。只有平行地轴，影子才是绕着一根固定的轴匀速扫过，时刻线的角度才与季节无关：把日期从冬至拖到夏至，那圈刻线纹丝不动，只有影子长短在变。晷针歪一点，日晷一年里就会走时不准。顺带说一句，它读出的是真太阳时，和手表最多差十六分钟，那个差值就是均时差。</p>
+  </section>
+  <section>
+    <h3>它有什么实际用处</h3>
+    <p>住宅日照标准规定，冬至日或大寒日底层窗台要有连续满窗日照。把纬度设成你所在的城市、日期拖到冬至，右图那圈包络就是这栋楼一整天遮挡的范围——楼间距该留多少，是从这张图上量出来的。</p>
+  </section>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function () {
+"use strict";
+if (typeof THREE === "undefined") {
+  document.querySelector(".stage").innerHTML =
+    '<div class="fallback">三维库没能加载，请检查网络连接后刷新页面。</div>';
+  return;
+}
+function $(id){ return document.getElementById(id); }
+var REDUCED = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+var D2R = Math.PI/180, R2D = 180/Math.PI;
+
+/* ============ 太阳位置（真实天文公式，忽略均时差与大气折射） ============
+   坐标约定：+x 东，+z 南，+y 天顶                                        */
+function sunDirection(dayOfYear, hour, latDeg) {
+  var decl = 23.44*D2R * Math.sin(2*Math.PI*(284 + dayOfYear)/365);   /* 赤纬 δ */
+  var H = (hour - 12) * 15 * D2R;                                     /* 时角 */
+  var phi = latDeg*D2R;
+  var sinAlt = Math.sin(phi)*Math.sin(decl) + Math.cos(phi)*Math.cos(decl)*Math.cos(H);
+  sinAlt = Math.max(-1, Math.min(1, sinAlt));
+  var alt = Math.asin(sinAlt);
+  /* 方位角：自南起算，向西为正 */
+  var azS = Math.atan2(Math.sin(H), Math.cos(H)*Math.sin(phi) - Math.tan(decl)*Math.cos(phi));
+  var L = new THREE.Vector3(
+    -Math.sin(azS)*Math.cos(alt),
+     Math.sin(alt),
+     Math.cos(azS)*Math.cos(alt));
+  var azNorth = (azS*R2D + 180 + 360) % 360;   /* 自北顺时针 */
+  return {alt:alt, azS:azS, azNorth:azNorth, L:L.normalize(), decl:decl};
+}
+function dayLength(dayOfYear, latDeg) {
+  var decl = 23.44*D2R * Math.sin(2*Math.PI*(284 + dayOfYear)/365);
+  var x = -Math.tan(latDeg*D2R) * Math.tan(decl);
+  if (x <= -1) return 24; if (x >= 1) return 0;
+  return 2*Math.acos(x)*R2D/15;
+}
+function dateLabel(n) {
+  var days = [31,28,31,30,31,30,31,31,30,31,30,31], m = 0, d = n;
+  while (m < 12 && d > days[m]) { d -= days[m]; m++; }
+  return (m+1) + "月" + d + "日";
+}
+function compass(azNorth) {
+  var names = ["北","东北","东","东南","南","西南","西","西北"];
+  return names[Math.round(azNorth/45) % 8];
+}
+
+/* ============ 几何：凸包 + 鞋带面积 ============ */
+function convexHull(pts) {                  /* Andrew monotone chain，输入 {x,z} */
+  var p = pts.slice().sort(function(a,b){ return a.x===b.x ? a.z-b.z : a.x-b.x; });
+  if (p.length < 3) return p;
+  function cr(o,a,b){ return (a.x-o.x)*(b.z-o.z) - (a.z-o.z)*(b.x-o.x); }
+  var lo = [], i;
+  for (i=0;i<p.length;i++){ while(lo.length>=2 && cr(lo[lo.length-2],lo[lo.length-1],p[i])<=0) lo.pop(); lo.push(p[i]); }
+  var up = [];
+  for (i=p.length-1;i>=0;i--){ while(up.length>=2 && cr(up[up.length-2],up[up.length-1],p[i])<=0) up.pop(); up.push(p[i]); }
+  lo.pop(); up.pop();
+  return lo.concat(up);
+}
+function shoelace(poly) {                   /* ½|Σ Pi × Pi+1| —— 每项都是一个叉积 */
+  var s = 0;
+  for (var i=0;i<poly.length;i++){
+    var a = poly[i], b = poly[(i+1)%poly.length];
+    s += a.x*b.z - a.z*b.x;
+  }
+  return Math.abs(s)/2;
+}
+
+/* ============ three.js 场景 ============ */
+var wrap3d = $("vp3d");
+var renderer = new THREE.WebGLRenderer({canvas:$("cv3d"), antialias:true, alpha:true});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+var scene = new THREE.Scene();
+var cam = new THREE.PerspectiveCamera(40, 16/11, 0.5, 4000);
+var amb = new THREE.AmbientLight(0xffffff, 0.55); scene.add(amb);
+var sunLight = new THREE.DirectionalLight(0xffffff, 0.85); scene.add(sunLight);
+var fill = new THREE.DirectionalLight(0x88aaff, 0.25); fill.position.set(-1,0.5,-1); scene.add(fill);
+
+var orbitState = {az:2.35, pol:1.10, r:230};
+(function(){
+  var t = new THREE.Vector3(0, 18, 0);
+  function apply(){
+    orbitState.pol = Math.max(0.12, Math.min(1.52, orbitState.pol));
+    orbitState.r = Math.max(70, Math.min(700, orbitState.r));
+    cam.position.set(
+      t.x + orbitState.r*Math.sin(orbitState.pol)*Math.cos(orbitState.az),
+      t.y + orbitState.r*Math.cos(orbitState.pol),
+      t.z + orbitState.r*Math.sin(orbitState.pol)*Math.sin(orbitState.az));
+    cam.lookAt(t);
+  }
+  var drag=false,lx=0,ly=0;
+  wrap3d.addEventListener("pointerdown",function(e){drag=true;lx=e.clientX;ly=e.clientY;wrap3d.setPointerCapture(e.pointerId);});
+  wrap3d.addEventListener("pointermove",function(e){
+    if(!drag)return;
+    orbitState.az-=(e.clientX-lx)*0.0075; orbitState.pol-=(e.clientY-ly)*0.0075;
+    lx=e.clientX;ly=e.clientY;apply();
+  });
+  function stop(e){drag=false;if(e.pointerId!==undefined&&wrap3d.hasPointerCapture&&wrap3d.hasPointerCapture(e.pointerId))wrap3d.releasePointerCapture(e.pointerId);}
+  wrap3d.addEventListener("pointerup",stop); wrap3d.addEventListener("pointercancel",stop);
+  wrap3d.addEventListener("wheel",function(e){e.preventDefault();orbitState.r*=(1+Math.sign(e.deltaY)*0.09);apply();},{passive:false});
+  apply();
+  window.__applyCam = apply;
+})();
+
+/* 地面 */
+var ground = new THREE.Mesh(new THREE.PlaneGeometry(900, 900),
+  new THREE.MeshStandardMaterial({color:0x1b2a3f, roughness:0.95}));
+ground.rotation.x = -Math.PI/2; ground.position.y = -0.05; scene.add(ground);
+var gridH = new THREE.GridHelper(600, 30, 0x3d5170, 0x24334e);
+gridH.material.transparent = true; gridH.material.opacity = 0.35; scene.add(gridH);
+
+/* 指北针 */
+(function(){
+  var c = document.createElement("canvas"); c.width=128;c.height=128;
+  var x=c.getContext("2d");
+  x.font="bold 72px -apple-system,'PingFang SC',sans-serif";
+  x.textAlign="center";x.textBaseline="middle";x.fillStyle="#93a4c0";
+  x.fillText("北",64,64);
+  var t=new THREE.CanvasTexture(c); t.minFilter=THREE.LinearFilter;
+  var s=new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true,depthTest:false}));
+  s.scale.set(22,22,1); s.position.set(0,6,-190); s.renderOrder=99; scene.add(s);
+  var g=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0.4,-170),new THREE.Vector3(0,0.4,-260)]);
+  scene.add(new THREE.Line(g,new THREE.LineBasicMaterial({color:0x3d5170})));
+})();
+
+/* 建筑：六面各自一个材质，按 N·L 着色 */
+var faceMats = [];
+for (var fi=0; fi<6; fi++)
+  faceMats.push(new THREE.MeshStandardMaterial({color:0x8899aa, roughness:0.8, metalness:0.02}));
+var building = new THREE.Mesh(new THREE.BoxGeometry(1,1,1), faceMats);
+scene.add(building);
+var buildEdge = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(1,1,1)),
+  new THREE.LineBasicMaterial({color:0xb9c7da, transparent:true, opacity:0.55}));
+scene.add(buildEdge);
+var FACE_N = [new THREE.Vector3(1,0,0), new THREE.Vector3(-1,0,0),
+              new THREE.Vector3(0,1,0), new THREE.Vector3(0,-1,0),
+              new THREE.Vector3(0,0,1), new THREE.Vector3(0,0,-1)];
+
+/* 阴影多边形 */
+var SHADOW_MAX = 12;
+var shGeo = new THREE.BufferGeometry();
+shGeo.setAttribute("position", new THREE.BufferAttribute(new Float32Array(SHADOW_MAX*3*3), 3));
+shGeo.setDrawRange(0,0);
+var shadowMesh = new THREE.Mesh(shGeo, new THREE.MeshBasicMaterial({
+  color:0x070d18, transparent:true, opacity:0.62, side:THREE.DoubleSide, depthWrite:false}));
+shadowMesh.renderOrder = 2; scene.add(shadowMesh);
+var shEdgeGeo = new THREE.BufferGeometry();
+shEdgeGeo.setAttribute("position", new THREE.BufferAttribute(new Float32Array((SHADOW_MAX+1)*3), 3));
+shEdgeGeo.setDrawRange(0,0);
+var shadowEdge = new THREE.Line(shEdgeGeo, new THREE.LineBasicMaterial({color:0x4a5f80}));
+shadowEdge.renderOrder = 3; scene.add(shadowEdge);
+
+/* 投影射线（楼顶四角 → 地面） */
+var rayLines = [];
+for (var ri=0; ri<4; ri++){
+  var g = new THREE.BufferGeometry();
+  g.setAttribute("position", new THREE.BufferAttribute(new Float32Array(6), 3));
+  var l = new THREE.Line(g, new THREE.LineDashedMaterial({
+    color:0xf0a63c, dashSize:5, gapSize:4, transparent:true, opacity:0.55}));
+  scene.add(l); rayLines.push(l);
+}
+
+/* 太阳与当日轨迹 */
+var SUN_R = 260;
+var sunBall = new THREE.Mesh(new THREE.SphereGeometry(9, 20, 20),
+  new THREE.MeshBasicMaterial({color:0xffd98a}));
+scene.add(sunBall);
+var sunGlow = new THREE.Mesh(new THREE.SphereGeometry(16, 20, 20),
+  new THREE.MeshBasicMaterial({color:0xf0a63c, transparent:true, opacity:0.22}));
+scene.add(sunGlow);
+var sunPath = new THREE.Line(new THREE.BufferGeometry(),
+  new THREE.LineBasicMaterial({color:0xf0a63c, transparent:true, opacity:0.35}));
+scene.add(sunPath);
+
+/* ============ 日晷 ============
+   晷针必须平行于地轴：指向天极 (0, sinφ, −cosφ)。
+   只有这样，影子的方向才只跟时角有关，与季节无关。      */
+var DIAL_R = 26, GNOMON_LEN = 22;
+var dialGroup = new THREE.Group(); dialGroup.visible = false; scene.add(dialGroup);
+
+var dialFace = new THREE.Mesh(new THREE.CircleGeometry(DIAL_R, 64),
+  new THREE.MeshStandardMaterial({color:0x2c3d57, roughness:0.9, side:THREE.DoubleSide}));
+dialFace.rotation.x = -Math.PI/2; dialFace.position.y = 0.12; dialGroup.add(dialFace);
+var dialRim = new THREE.Mesh(new THREE.TorusGeometry(DIAL_R, 0.35, 8, 64),
+  new THREE.MeshBasicMaterial({color:0x6f88ab}));
+dialRim.rotation.x = -Math.PI/2; dialRim.position.y = 0.14; dialGroup.add(dialRim);
+
+var gnomon = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 1, 12),
+  new THREE.MeshStandardMaterial({color:0xf7c579, roughness:0.5}));
+dialGroup.add(gnomon);
+var polarLine = new THREE.Line(new THREE.BufferGeometry().setAttribute(
+    "position", new THREE.BufferAttribute(new Float32Array(6), 3)),
+  new THREE.LineDashedMaterial({color:0x3ec8d8, dashSize:3, gapSize:2.4, transparent:true, opacity:0.7}));
+dialGroup.add(polarLine);
+
+var hourGeo = new THREE.BufferGeometry();
+hourGeo.setAttribute("position", new THREE.BufferAttribute(new Float32Array(30*2*3), 3));
+hourGeo.setDrawRange(0,0);
+var hourLines = new THREE.LineSegments(hourGeo,
+  new THREE.LineBasicMaterial({color:0x9fb2cc, transparent:true, opacity:0.75}));
+dialGroup.add(hourLines);
+
+var dialShadow = new THREE.Line(new THREE.BufferGeometry().setAttribute(
+    "position", new THREE.BufferAttribute(new Float32Array(6), 3)),
+  new THREE.LineBasicMaterial({color:0x1a1030, linewidth:2}));
+dialGroup.add(dialShadow);
+
+var hourLabels = [];
+(function(){
+  var marks = [6, 9, 12, 15, 18];
+  for (var i=0;i<marks.length;i++){
+    var c = document.createElement("canvas"); c.width=128; c.height=64;
+    var x = c.getContext("2d");
+    x.font = "bold 44px ui-monospace, Menlo, monospace";
+    x.textAlign="center"; x.textBaseline="middle";
+    x.shadowColor="rgba(0,0,0,.9)"; x.shadowBlur=10; x.fillStyle="#cfdbec";
+    x.fillText(String(marks[i]), 64, 34);
+    var t = new THREE.CanvasTexture(c); t.minFilter = THREE.LinearFilter;
+    var s = new THREE.Sprite(new THREE.SpriteMaterial({map:t, transparent:true, depthTest:false}));
+    s.scale.set(9, 4.5, 1); s.renderOrder = 120;
+    s.userData.hour = marks[i];
+    dialGroup.add(s); hourLabels.push(s);
+  }
+})();
+
+/* 时刻线方向：用当地昼最长的那一天生成（北半球夏至、南半球冬至），
+   这样 5–19 点的刻线都画得出来；由于晷针平行地轴，
+   算出的方向对任何日期都成立——这正是日晷能全年通用的原因。 */
+function hourLineDir(hour, latDeg) {
+  var refDay = latDeg >= 0 ? 172 : 355;
+  var s2 = sunDirection(refDay, hour, latDeg);
+  if (s2.L.y <= 1e-3) return null;
+  var phi = latDeg*D2R;
+  var dir = new THREE.Vector3(0, Math.sin(phi), -Math.cos(phi));
+  if (dir.y < 0) dir.negate();
+  var tip = dir.clone().multiplyScalar(GNOMON_LEN);
+  var t = tip.y / s2.L.y;
+  var v = new THREE.Vector3(tip.x - t*s2.L.x, 0, tip.z - t*s2.L.z);
+  if (v.lengthSq() < 1e-6) return null;
+  return v.normalize();
+}
+
+/* ============ 状态 ============ */
+var S = {time:9.5, day:355, lat:35, H:36, W:30, D:14, envelope:true, playing:false, dial:false};
+var sun = null, shadowPoly = [], shadowArea = 0;
+
+function buildingTopCorners() {
+  var hw = S.W/2, hd = S.D/2;
+  return [
+    new THREE.Vector3(-hw, S.H, -hd), new THREE.Vector3(hw, S.H, -hd),
+    new THREE.Vector3(hw, S.H, hd),  new THREE.Vector3(-hw, S.H, hd)];
+}
+function baseCorners() {
+  var hw = S.W/2, hd = S.D/2;
+  return [{x:-hw,z:-hd},{x:hw,z:-hd},{x:hw,z:hd},{x:-hw,z:hd}];
+}
+/* 射线与地面求交：t = (P·n)/(L·n)，n = (0,1,0) */
+function projectToGround(P, L) {
+  var denom = L.y;
+  if (denom <= 1e-4) return null;
+  var t = P.y / denom;
+  return {x:P.x - t*L.x, z:P.z - t*L.z};
+}
+function computeShadow(L) {
+  var pts = baseCorners(), top = buildingTopCorners(), i;
+  for (i=0;i<top.length;i++){
+    var q = projectToGround(top[i], L);
+    if (!q) return null;
+    pts.push(q);
+  }
+  return convexHull(pts);
+}
+
+/* ============ 更新 ============ */
+function update() {
+  sun = sunDirection(S.day, S.time, S.lat);
+  var L = sun.L, up = sun.alt > 0;
+
+  /* 建筑体量 */
+  building.scale.set(S.W, S.H, S.D);
+  building.position.set(0, S.H/2, 0);
+  buildEdge.scale.copy(building.scale);
+  buildEdge.position.copy(building.position);
+
+  /* 各面明暗：max(0, N·L) */
+  for (var f=0; f<6; f++){
+    var ndl = up ? Math.max(0, FACE_N[f].dot(L)) : 0;
+    var base = 0.11, k = 0.78;
+    var warm = up ? Math.min(1, 0.35 + sun.alt/(Math.PI/2)) : 0;
+    var v = base + k*ndl;
+    faceMats[f].color.setRGB(
+      Math.min(1, v*(0.72 + 0.45*warm)),
+      Math.min(1, v*(0.74 + 0.30*warm)),
+      Math.min(1, v*(0.86 + 0.05*warm)));
+  }
+
+  /* 太阳与光 */
+  sunBall.visible = sunGlow.visible = up;
+  if (up) {
+    var sp = L.clone().multiplyScalar(SUN_R);
+    sunBall.position.copy(sp); sunGlow.position.copy(sp);
+    sunLight.position.copy(sp);
+    sunLight.intensity = 0.35 + 0.55*Math.sin(Math.max(0, sun.alt));
+    amb.intensity = 0.42 + 0.25*Math.sin(Math.max(0, sun.alt));
+  } else {
+    sunLight.intensity = 0.05; amb.intensity = 0.28;
+  }
+
+  /* 当日太阳轨迹 */
+  var pathPts = [];
+  for (var h=0; h<=24; h+=0.25){
+    var s2 = sunDirection(S.day, h, S.lat);
+    if (s2.alt > 0) pathPts.push(s2.L.clone().multiplyScalar(SUN_R));
+  }
+  sunPath.geometry.dispose();
+  sunPath.geometry = new THREE.BufferGeometry().setFromPoints(
+    pathPts.length > 1 ? pathPts : [new THREE.Vector3(), new THREE.Vector3()]);
+  sunPath.visible = pathPts.length > 1;
+
+  /* 阴影 */
+  shadowPoly = up ? computeShadow(L) : null;
+  $("nightMsg").className = "night" + (up ? "" : " on");
+
+  if (shadowPoly && shadowPoly.length >= 3) {
+    shadowArea = shoelace(shadowPoly);
+    var n = Math.min(shadowPoly.length, SHADOW_MAX);
+    var pos = shGeo.attributes.position, idx = 0;
+    for (var t2=1; t2<n-1; t2++){
+      var tri = [shadowPoly[0], shadowPoly[t2], shadowPoly[t2+1]];
+      for (var v2=0; v2<3; v2++){
+        pos.setXYZ(idx++, tri[v2].x, 0.06, tri[v2].z);
+      }
+    }
+    pos.needsUpdate = true; shGeo.setDrawRange(0, idx);
+    shGeo.computeBoundingSphere();
+    shadowMesh.visible = true;
+
+    var ep = shEdgeGeo.attributes.position;
+    for (var e2=0; e2<n; e2++) ep.setXYZ(e2, shadowPoly[e2].x, 0.08, shadowPoly[e2].z);
+    ep.setXYZ(n, shadowPoly[0].x, 0.08, shadowPoly[0].z);
+    ep.needsUpdate = true; shEdgeGeo.setDrawRange(0, n+1);
+    shEdgeGeo.computeBoundingSphere();
+    shadowEdge.visible = true;
+  } else {
+    shadowArea = 0;
+    shadowMesh.visible = false; shadowEdge.visible = false;
+  }
+
+  /* 投影射线 */
+  var tops = buildingTopCorners();
+  for (var r2=0; r2<4; r2++){
+    var q2 = up ? projectToGround(tops[r2], L) : null;
+    var lp = rayLines[r2].geometry.attributes.position;
+    if (q2) {
+      lp.setXYZ(0, tops[r2].x, tops[r2].y, tops[r2].z);
+      lp.setXYZ(1, q2.x, 0.1, q2.z);
+      lp.needsUpdate = true;
+      rayLines[r2].geometry.computeBoundingSphere();
+      rayLines[r2].computeLineDistances();
+      rayLines[r2].visible = true;
+    } else rayLines[r2].visible = false;
+  }
+
+  /* 天空色随高度角 */
+  var sky;
+  if (!up) sky = "linear-gradient(180deg,#070c16 0%,#0b1424 100%)";
+  else {
+    var k2 = Math.min(1, Math.sin(sun.alt)*1.6);
+    var top1 = "rgb(" + Math.round(20+40*k2) + "," + Math.round(34+70*k2) + "," + Math.round(58+110*k2) + ")";
+    var bot = "rgb(" + Math.round(90-30*k2) + "," + Math.round(58-6*k2) + "," + Math.round(48+30*k2) + ")";
+    sky = "linear-gradient(180deg," + top1 + " 0%," + bot + " 100%)";
+  }
+  wrap3d.style.background = sky;
+
+  /* 读数 */
+  var altDeg = sun.alt*R2D;
+  $("dAlt").textContent = up ? altDeg.toFixed(1) + "°" : "夜间";
+  $("dAz").textContent = up ? sun.azNorth.toFixed(0) + "°" : "—";
+  $("dirTag").textContent = up ? compass(sun.azNorth) + "方 · " + altDeg.toFixed(0) + "°" : "夜间";
+  var shLen = up ? S.H/Math.tan(sun.alt) : Infinity;
+  $("dLen").textContent = up
+    ? (shLen > 2000 ? "> 2 km" : shLen.toFixed(1) + " m")
+    : "—";
+  var dl = dayLength(S.day, S.lat);
+  $("dDay").textContent = dl.toFixed(1) + " h";
+  $("dArea").textContent = shadowArea > 0
+    ? (shadowArea > 10000 ? (shadowArea/10000).toFixed(2) + " 公顷" : Math.round(shadowArea) + " m²")
+    : "—";
+  $("dVerts").textContent = shadowPoly ? shadowPoly.length + " 个" : "—";
+
+  updateDial(up);
+  drawPlan();
+  updateCalcBox(shLen, up);
+}
+
+function dialCenter(){ return new THREE.Vector3(0, 0, S.D/2 + DIAL_R + 22); }
+
+function updateDial(up) {
+  dialGroup.visible = S.dial;
+  $("dialBox").style.display = S.dial ? "block" : "none";
+  if (!S.dial) return;
+
+  var C = dialCenter();
+  dialGroup.position.copy(C);
+
+  var phi = S.lat*D2R;
+  var dir = new THREE.Vector3(0, Math.sin(phi), -Math.cos(phi));
+  var flat = Math.abs(S.lat) < 5;
+  if (dir.y < 0) dir.negate();
+
+  /* 晷针：沿天极方向 */
+  gnomon.visible = !flat;
+  if (!flat) {
+    gnomon.scale.set(1, GNOMON_LEN, 1);
+    gnomon.position.copy(dir.clone().multiplyScalar(GNOMON_LEN/2));
+    gnomon.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), dir);
+  }
+  var pl = polarLine.geometry.attributes.position;
+  pl.setXYZ(0, 0, 0, 0);
+  pl.setXYZ(1, dir.x*GNOMON_LEN*2.1, dir.y*GNOMON_LEN*2.1, dir.z*GNOMON_LEN*2.1);
+  pl.needsUpdate = true;
+  polarLine.geometry.computeBoundingSphere();
+  polarLine.computeLineDistances();
+  polarLine.visible = !flat;
+
+  /* 时刻线 */
+  var hp = hourGeo.attributes.position, idx = 0;
+  var dirs = {};
+  if (!flat) {
+    for (var h=5; h<=19; h++){
+      var d = hourLineDir(h, S.lat);
+      if (!d) continue;
+      dirs[h] = d;
+      hp.setXYZ(idx++, d.x*3.5, 0.2, d.z*3.5);
+      hp.setXYZ(idx++, d.x*DIAL_R, 0.2, d.z*DIAL_R);
+    }
+  }
+  hp.needsUpdate = true; hourGeo.setDrawRange(0, idx);
+  hourGeo.computeBoundingSphere();
+
+  for (var i=0;i<hourLabels.length;i++){
+    var s = hourLabels[i], d2 = dirs[s.userData.hour];
+    if (d2 && !flat){
+      s.visible = true;
+      s.position.set(d2.x*(DIAL_R+6), 3.2, d2.z*(DIAL_R+6));
+    } else s.visible = false;
+  }
+
+  /* 晷针的真实影子 */
+  var ds = dialShadow.geometry.attributes.position;
+  var shown = false;
+  if (up && !flat) {
+    var tip = dir.clone().multiplyScalar(GNOMON_LEN);
+    var tipW = tip.clone().add(C);
+    var q = projectToGround(tipW, sun.L);
+    if (q) {
+      var lx = q.x - C.x, lz = q.z - C.z;
+      var len = Math.sqrt(lx*lx + lz*lz);
+      if (len > DIAL_R) { lx *= DIAL_R/len; lz *= DIAL_R/len; }
+      ds.setXYZ(0, 0, 0.3, 0);
+      ds.setXYZ(1, lx, 0.3, lz);
+      ds.needsUpdate = true;
+      dialShadow.geometry.computeBoundingSphere();
+      shown = true;
+    }
+  }
+  dialShadow.visible = shown;
+
+  var box = $("dialBox");
+  if (flat) {
+    box.innerHTML = '纬度接近赤道，晷针几乎水平，水平式日晷失效——'
+      + '这里该改用赤道式晷面。';
+  } else {
+    box.innerHTML =
+      '晷针方向 = (0, sin φ, −cos φ) = (0, <b>' + Math.abs(Math.sin(phi)).toFixed(3)
+      + '</b>, <b>' + (-Math.cos(phi)).toFixed(3) + '</b>)　<span class="hl-d">平行于地轴</span><br>'
+      + '正因为如此，时刻线只跟时角有关：<b>改日期，线纹丝不动</b>，只有影子长短变。<br>'
+      + '晷面读出的是<b>真太阳时</b>，与钟表最多差 16 分钟（均时差）。';
+  }
+}
+
+function updateCalcBox(shLen, up) {
+  var box = $("calcBox");
+  if (!up) {
+    box.innerHTML = "<b>L·n ≤ 0</b>　太阳在地平线以下，射线与地面无交点。";
+    return;
+  }
+  var L = sun.L;
+  var P = buildingTopCorners()[0];
+  var t = P.y / L.y;
+  box.innerHTML =
+    'L = (<b>' + L.x.toFixed(3) + '</b>, <b>' + L.y.toFixed(3) + '</b>, <b>' + L.z.toFixed(3) + '</b>)　'
+    + '<span class="hl-d">L·n = ' + L.y.toFixed(3) + '</span><br>'
+    + '楼顶角点 P = (' + P.x.toFixed(0) + ', ' + P.y.toFixed(0) + ', ' + P.z.toFixed(0) + ')　'
+    + '<span class="hl-d">t = P·n ⁄ L·n = ' + t.toFixed(1) + '</span><br>'
+    + '落点 P′ = P − tL = (' + (P.x-t*L.x).toFixed(1) + ', 0, ' + (P.z-t*L.z).toFixed(1) + ')<br>'
+    + '<span class="hl-x">鞋带公式：' + (shadowPoly ? shadowPoly.length : 0)
+    + ' 个顶点 → S = ' + Math.round(shadowArea) + ' m²</span>';
+}
+
+/* ============ 平面图 ============ */
+var planCanvas = $("cvPlan"), pctx = planCanvas.getContext("2d"), PW = 0;
+function resizePlan() {
+  var w = $("vpPlan").clientWidth, h = $("vpPlan").clientHeight;
+  if (!w || !h) return;
+  var dpr = Math.min(window.devicePixelRatio, 2);
+  planCanvas.width = w*dpr; planCanvas.height = h*dpr;
+  pctx.setTransform(dpr,0,0,dpr,0,0);
+  PW = w; drawPlan();
+}
+function envelopePolys() {
+  var out = [];
+  for (var h=0; h<=24; h+=0.5){
+    var s2 = sunDirection(S.day, h, S.lat);
+    if (s2.alt <= 0.5*D2R) continue;
+    var p = computeShadow(s2.L);
+    if (p && p.length >= 3) out.push(p);
+  }
+  return out;
+}
+function drawPlan() {
+  if (!PW) return;
+  pctx.clearRect(0,0,PW,PW);
+  var envs = S.envelope ? envelopePolys() : [];
+  /* 自适应比例：容纳建筑 + 当前阴影 + 包络 */
+  var ext = Math.max(S.W, S.D) * 0.9;
+  function grow(p){ for (var i=0;i<p.length;i++) ext = Math.max(ext, Math.abs(p[i].x), Math.abs(p[i].z)); }
+  if (shadowPoly) grow(shadowPoly);
+  for (var e=0;e<envs.length;e++) grow(envs[e]);
+  if (S.dial) ext = Math.max(ext, dialCenter().z + DIAL_R + 10);
+  ext = Math.min(ext*1.15, 900);
+  var scale = PW/(2*ext);
+  function P2C(p){ return {x:PW/2 + p.x*scale, y:PW/2 + p.z*scale}; }  /* +z 南 → 画面下方 */
+
+  /* 网格：每 20 m 或自适应 */
+  var step = ext > 400 ? 100 : ext > 160 ? 50 : 20;
+  pctx.strokeStyle = "rgba(61,81,112,.28)"; pctx.lineWidth = 1;
+  for (var g=-Math.ceil(ext/step)*step; g<=ext; g+=step){
+    var c1 = P2C({x:g,z:-ext}), c2 = P2C({x:g,z:ext});
+    pctx.beginPath(); pctx.moveTo(c1.x,c1.y); pctx.lineTo(c2.x,c2.y); pctx.stroke();
+    var c3 = P2C({x:-ext,z:g}), c4 = P2C({x:ext,z:g});
+    pctx.beginPath(); pctx.moveTo(c3.x,c3.y); pctx.lineTo(c4.x,c4.y); pctx.stroke();
+  }
+
+  /* 包络 */
+  if (envs.length){
+    pctx.strokeStyle = "rgba(179,136,255,.30)"; pctx.lineWidth = 1;
+    for (var k=0;k<envs.length;k++){
+      var poly = envs[k];
+      pctx.beginPath();
+      for (var m=0;m<poly.length;m++){
+        var cp = P2C(poly[m]);
+        if (m===0) pctx.moveTo(cp.x,cp.y); else pctx.lineTo(cp.x,cp.y);
+      }
+      pctx.closePath(); pctx.stroke();
+    }
+  }
+
+  /* 当前阴影 */
+  if (shadowPoly && shadowPoly.length>=3){
+    pctx.beginPath();
+    for (var i2=0;i2<shadowPoly.length;i2++){
+      var q = P2C(shadowPoly[i2]);
+      if (i2===0) pctx.moveTo(q.x,q.y); else pctx.lineTo(q.x,q.y);
+    }
+    pctx.closePath();
+    pctx.fillStyle = "rgba(24,20,52,.78)"; pctx.fill();
+    pctx.strokeStyle = "rgba(211,188,255,.85)"; pctx.lineWidth = 1.6; pctx.stroke();
+    /* 顶点标记 —— 鞋带公式绕行的那一圈 */
+    pctx.fillStyle = "rgba(211,188,255,.9)";
+    for (var v3=0; v3<shadowPoly.length; v3++){
+      var vp = P2C(shadowPoly[v3]);
+      pctx.beginPath(); pctx.arc(vp.x,vp.y,2.6,0,Math.PI*2); pctx.fill();
+    }
+  }
+
+  /* 日晷：时刻线在平面图上最能看出角度不均匀 */
+  if (S.dial && Math.abs(S.lat) >= 5){
+    var Cd = dialCenter(), cc = P2C({x:Cd.x, z:Cd.z});
+    pctx.strokeStyle = "rgba(111,136,171,.55)"; pctx.lineWidth = 1;
+    pctx.beginPath(); pctx.arc(cc.x, cc.y, DIAL_R*scale, 0, Math.PI*2); pctx.stroke();
+    pctx.strokeStyle = "rgba(159,178,204,.65)";
+    pctx.font = "11px ui-monospace, Menlo, monospace";
+    pctx.fillStyle = "rgba(159,178,204,.8)";
+    for (var hh=5; hh<=19; hh++){
+      var hd = hourLineDir(hh, S.lat);
+      if (!hd) continue;
+      pctx.beginPath();
+      pctx.moveTo(cc.x + hd.x*3.5*scale, cc.y + hd.z*3.5*scale);
+      pctx.lineTo(cc.x + hd.x*DIAL_R*scale, cc.y + hd.z*DIAL_R*scale);
+      pctx.stroke();
+      if (hh % 3 === 0)
+        pctx.fillText(String(hh), cc.x + hd.x*(DIAL_R+7)*scale - 4, cc.y + hd.z*(DIAL_R+7)*scale + 4);
+    }
+    if (sun && sun.alt > 0){
+      var phi2 = S.lat*D2R;
+      var dv = new THREE.Vector3(0, Math.sin(phi2), -Math.cos(phi2));
+      if (dv.y < 0) dv.negate();
+      var tipW2 = dv.clone().multiplyScalar(GNOMON_LEN).add(Cd);
+      var qq = projectToGround(tipW2, sun.L);
+      if (qq){
+        var vx = qq.x - Cd.x, vz = qq.z - Cd.z;
+        var ln = Math.sqrt(vx*vx + vz*vz);
+        if (ln > DIAL_R){ vx *= DIAL_R/ln; vz *= DIAL_R/ln; }
+        pctx.strokeStyle = "rgba(240,166,60,.95)"; pctx.lineWidth = 2.4;
+        pctx.beginPath(); pctx.moveTo(cc.x, cc.y);
+        pctx.lineTo(cc.x + vx*scale, cc.y + vz*scale); pctx.stroke();
+      }
+    }
+  }
+
+  /* 建筑占地 */
+  var a = P2C({x:-S.W/2,z:-S.D/2}), b = P2C({x:S.W/2,z:S.D/2});
+  pctx.fillStyle = "rgba(240,166,60,.85)";
+  pctx.fillRect(a.x, a.y, b.x-a.x, b.y-a.y);
+  pctx.strokeStyle = "rgba(247,197,121,1)"; pctx.lineWidth = 1.4;
+  pctx.strokeRect(a.x, a.y, b.x-a.x, b.y-a.y);
+
+  /* 比例尺 */
+  var barM = step, barPx = barM*scale;
+  pctx.strokeStyle = "rgba(230,236,245,.75)"; pctx.lineWidth = 2;
+  pctx.beginPath(); pctx.moveTo(14, PW-16); pctx.lineTo(14+barPx, PW-16); pctx.stroke();
+  pctx.fillStyle = "rgba(230,236,245,.75)";
+  pctx.font = "12px ui-monospace, Menlo, monospace";
+  pctx.fillText(barM + " m", 14, PW-22);
+  pctx.fillStyle = "rgba(147,164,192,.8)";
+  pctx.fillText("北 ↑", PW-42, 22);
+}
+
+/* ============ 控件 ============ */
+function hhmm(t){
+  var h = Math.floor(t), m = Math.round((t-h)*60);
+  if (m === 60){ h++; m = 0; }
+  return (h<10?"0":"") + (h%24) + ":" + (m<10?"0":"") + m;
+}
+function bind(id, out, key, fmt, after) {
+  var el = $(id);
+  el.addEventListener("input", function(){
+    S[key] = parseFloat(el.value);
+    $(out).textContent = fmt(S[key]);
+    if (after) after();
+    update();
+  });
+  $(out).textContent = fmt(S[key]);
+}
+bind("sTime","oTime","time", hhmm);
+bind("sDay","oDay","day", dateLabel, function(){
+  Array.prototype.forEach.call(document.querySelectorAll(".seg button[data-day]"), function(b){
+    b.setAttribute("aria-pressed", parseInt(b.getAttribute("data-day"),10)===S.day ? "true":"false");
+  });
+});
+bind("sLat","oLat","lat", function(v){ return Math.abs(v) + "°" + (v>=0?"N":"S"); });
+bind("sH","oH","H", function(v){ return v + " m"; });
+bind("sW","oW","W", function(v){ return v + " m"; });
+bind("sD","oD","D", function(v){ return v + " m"; });
+
+Array.prototype.forEach.call(document.querySelectorAll(".seg button[data-day]"), function(b){
+  b.addEventListener("click", function(){
+    S.day = parseInt(b.getAttribute("data-day"),10);
+    $("sDay").value = S.day; $("oDay").textContent = dateLabel(S.day);
+    Array.prototype.forEach.call(document.querySelectorAll(".seg button[data-day]"), function(o){
+      o.setAttribute("aria-pressed", o===b ? "true":"false");
+    });
+    update();
+  });
+});
+$("cEnvelope").addEventListener("change", function(){ S.envelope = this.checked; drawPlan(); });
+$("cDial").addEventListener("change", function(){ S.dial = this.checked; update(); });
+$("btnPlay").addEventListener("click", function(){
+  S.playing = !S.playing;
+  this.setAttribute("aria-pressed", S.playing ? "true":"false");
+  this.textContent = S.playing ? "⏸ 暂停" : "▶ 播放一天";
+});
+
+function resize3d(){
+  var w = wrap3d.clientWidth, h = wrap3d.clientHeight;
+  if (!w || !h) return;
+  renderer.setSize(w,h,false);
+  cam.aspect = w/h; cam.updateProjectionMatrix();
+}
+window.addEventListener("resize", function(){ resize3d(); resizePlan(); });
+
+var last = performance.now();
+function tick(now){
+  requestAnimationFrame(tick);
+  var dt = Math.min((now-last)/1000, 0.1); last = now;
+  if (S.playing && !REDUCED){
+    S.time += dt*1.6;
+    if (S.time > 24) S.time -= 24;
+    $("sTime").value = S.time.toFixed(2);
+    $("oTime").textContent = hhmm(S.time);
+    update();
+  }
+  renderer.render(scene, cam);
+}
+setTimeout(function(){ resize3d(); resizePlan(); update(); }, 0);
+resize3d(); resizePlan(); update();
+requestAnimationFrame(tick);
+
+})();
+</script>
+</body>
+</html>

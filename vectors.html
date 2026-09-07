@@ -1,0 +1,463 @@
+<!DOCTYPE HTML>
+<!--
+	Forty by HTML5 UP
+	html5up.net | @ajlkn
+	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+-->
+<html lang="zh-CN">
+	<head>
+		<title>向量与空间 · 看得见的数学</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+		<meta name="description" content="点积测重合，叉积测张开，行列式量体积。一条以空间维数为轴的主线，串起平面方程与高斯消元。" />
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<style>
+			/* ── 双语按钮 ── */
+			.btn-en { font-size: 0.78em; opacity: 0.72; letter-spacing: 0.02em; }
+
+			/* ── 深色公式框 ── */
+			.eqbox {
+				background: #16223a; color: #e6ecf5;
+				border-left: 3px solid #b388ff; border-radius: 3px;
+				padding: 1.2rem 1.5rem; margin: 1.6rem 0; overflow-x: auto;
+				font-size: 0.95em; line-height: 2;
+			}
+			.eqbox .lbl { color: #93a4c0; font-size: 0.85em; }
+			.eqbox strong { color: #f7c579; }
+
+			/* ── 概念卡片 ── */
+			.concept {
+				border: 1px solid #dfe3e8; border-left: 4px solid #b388ff;
+				border-radius: 4px; padding: 1.4rem 1.6rem 0.9rem; margin: 1.8rem 0;
+			}
+			.concept h3 { margin: 0 0 1rem; }
+			.concept h3 .en { font-size: 0.62em; opacity: 0.5; font-weight: 400; letter-spacing: 0.04em; }
+			.concept dl { margin: 0; }
+			.concept dt {
+				font-size: 0.72em; letter-spacing: 0.15em; text-transform: uppercase;
+				color: #8a94a6; margin-top: 0.9rem; font-weight: 600;
+			}
+			.concept dd { margin: 0.15rem 0 0; line-height: 1.75; }
+			.concept .zero { color: #c0392b; }
+
+			/* ── 演示卡片 ── */
+			.demos { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.2rem; margin: 2rem 0; }
+			.demo {
+				display: block; text-decoration: none; border-radius: 4px;
+				padding: 1.4rem 1.5rem 1.5rem; color: #e6ecf5;
+				background: linear-gradient(160deg, #1b2b47 0%, #0f1826 100%);
+				border: 1px solid #2a3c5e; transition: transform .18s ease, border-color .18s ease;
+			}
+			.demo:hover { transform: translateY(-3px); border-color: #b388ff; }
+			.demo .tag {
+				font-size: 0.7em; letter-spacing: 0.14em; text-transform: uppercase;
+				color: #f0a63c; display: block; margin-bottom: 0.5rem;
+			}
+			.demo strong { display: block; font-size: 1.12em; color: #fff; margin-bottom: 0.45rem; }
+			.demo span.d { display: block; font-size: 0.86em; color: #93a4c0; line-height: 1.7; }
+			.demo .go { display: block; margin-top: 0.9rem; font-size: 0.82em; color: #8fe3ed; }
+
+			/* ── 友情码弹窗 ── */
+			.gate {
+				position: fixed; inset: 0; z-index: 10000;
+				display: flex; align-items: center; justify-content: center; padding: 1.5rem;
+				background: rgba(13, 22, 38, 0.55);
+				backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+			}
+			.gate[hidden] { display: none; }
+			.gate-card {
+				background: #16223a; color: #e6ecf5; border: 1px solid #2a3c5e; border-radius: 5px;
+				padding: 2.1rem 2.25rem 1.8rem; max-width: 27rem; width: 100%;
+				box-shadow: 0 1.4rem 3.5rem rgba(0,0,0,.45); text-align: center;
+			}
+			.gate-card h3 { margin: 0 0 0.3rem; color: #f7c579; font-size: 1.15em; }
+			.gate-en { opacity: 0.55; font-size: 0.85em; margin: 0 0 0.4rem; }
+			.gate-hint { font-size: 0.85em; color: #93a4c0; margin: 0.9rem 0 1.3rem; line-height: 1.8; }
+			.gate-card input[type="text"] {
+				background: #0d1626; border: 1px solid #2a3c5e; color: #e6ecf5; border-radius: 3px;
+				text-align: center; font-size: 1.15em; letter-spacing: 0.08em; margin-bottom: 0.8rem;
+			}
+			.gate-card input[type="text"]:focus { border-color: #b388ff; box-shadow: none; }
+			.gate-err { color: #ef6a5e; font-size: 0.85em; margin: 0 0 0.8rem; }
+			.gate-err[hidden] { display: none; }
+			.gate-actions { display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap; }
+			.gate-actions .button { margin: 0; }
+			.gate-actions .button:not(.primary) { color: #93a4c0; box-shadow: inset 0 0 0 1px #2a3c5e; }
+		</style>
+		<script>
+			window.MathJax = {
+				tex: { inlineMath: [['$','$']], displayMath: [['$$','$$']] },
+				options: { skipHtmlTags: ['script','noscript','style','textarea','pre','code'] }
+			};
+		</script>
+		<script id="MathJax-script" async
+			src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.min.js"></script>
+		<noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
+	</head>
+	<body class="is-preload">
+
+		<div id="wrapper">
+
+			<header id="header">
+				<a href="index.html" class="logo"><strong>看得见的数学</strong> <span>by BAOQUAN</span></a>
+				<nav><a href="#menu">Menu</a></nav>
+			</header>
+
+			<nav id="menu">
+				<ul class="links">
+					<li><a href="index.html">首页 &nbsp;Home</a></li>
+					<li><a href="vectors.html">向量与空间 &nbsp;Vectors</a></li>
+					<li><a href="matrix.html">矩阵与变换 &nbsp;Matrices</a></li>
+					<li><a href="calculus.html">变化与梯度 &nbsp;Calculus</a></li>
+					<li><a href="fitting.html">拟合与最小二乘 &nbsp;Least Squares</a></li>
+					<li><a href="neural.html">神经网络 &nbsp;Neural Networks</a></li>
+					<li><a href="fractals.html">分形与维数 &nbsp;Fractals</a></li>
+					<li><a href="solar-tracker.html">实战 · 开机那一下</a></li>
+					<li><a href="servo-calib.html">实战 · 舵机标定</a></li>
+				</ul>
+			</nav>
+
+			<div id="main" class="alt">
+				<section id="one">
+					<div class="inner">
+
+						<header class="major">
+							<h1>向量与空间</h1>
+							<p>Vectors &amp; Space<br />
+							点积测重合，叉积测张开，行列式量体积——它们是同一件事在不同维数上的三副面孔。</p>
+						</header>
+
+						<div class="eqbox" style="border-left-color:#f0a63c">
+							<span class="lbl">关于这份讲义</span><br />
+							这不是按教科书模板写的。定义、例题、习题解法，课本里都有，不必重复。<br />
+							这里只留三样东西：<strong>每个概念到底在量什么</strong>、
+							<strong>它在更大的结构里站在哪</strong>、
+							<strong>它在真实世界的什么地方转着</strong>。<br />
+							最后那样是重点——页面下半部分四个可以拖动的三维演示，
+							是这份讲义真正想说的话。
+						</div>
+
+						<h2>一条主线：能撑开几维</h2>
+
+						<p>这一章所有的概念，都在回答同一个问题的不同侧面：<strong>一组方向能撑开多大的空间。</strong></p>
+
+						<div class="eqbox">
+							<span class="lbl">维数阶梯</span><br />
+							1 个向量　→　一维，一条线　　　　　　　　长度 $|\mathbf a|$<br />
+							2 个向量　→　二维，一张平面　　　　　　　面积 $|\mathbf a\times\mathbf b|$<br />
+							3 个向量　→　三维，一块体积　　　　　　　体积 $|\mathbf a\cdot(\mathbf b\times\mathbf c)|$<br />
+							<br />
+							<span class="lbl">一旦撑不开：</span><br />
+							$\det=0$　⟺　共面　⟺　线性相关　⟺　有一个方向是多余的
+						</div>
+
+						<p>反过来，方程组是在做减法：<strong>三维空间有三个自由度，一个方程削掉一个。</strong>
+						三个独立方程削到零维，交出一个点；有一个方程是多余的，就还剩一维，交出一条线。
+						所谓"解的维数"，就是这么数出来的。</p>
+
+						<hr class="major" />
+
+						<h2>十一个可以拖的场景</h2>
+
+						<p>下面这一整套动画把这条主线从头走了一遍：模长怎么来的、
+						$\overrightarrow{AB}=\mathbf b-\mathbf a$ 为什么是终点减起点、投影带不带符号、
+						叉积为什么垂直、面积和体积怎么算出来的。
+						每个场景都能拖动旋转、拖时间轴、留痕迹。</p>
+
+						<div class="demos" style="grid-template-columns:1fr">
+							<a class="demo" href="demo-vectors11.html" target="_blank" rel="noopener"
+							   style="background:linear-gradient(160deg,#1a2145 0%,#0F1430 100%)">
+								<span class="tag">Core</span>
+								<strong>向量：十一个可旋转的三维动画</strong>
+								<span class="d">从两次勾股定理到混合积，一条线走完。
+								最后三个场景把课本原题拆开给你看——原来 $\mathbf a\times\mathbf b$
+								就是方程组 $A\mathbf x=\mathbf 0$ 的解。</span>
+								<span class="go">打开全部场景 →</span>
+							</a>
+						</div>
+
+						<hr class="major" />
+
+						<h2>五个概念</h2>
+
+						<div class="concept">
+							<h3>点积　<span class="en">Dot Product</span></h3>
+							<dl>
+								<dt>是什么</dt>
+								<dd>$\mathbf a\cdot\mathbf b=\sum a_ib_i=|\mathbf a||\mathbf b|\cos\theta$，两个向量给出一个<strong>数</strong>。</dd>
+								<dt>在量什么</dt>
+								<dd>投影。$\mathbf a$ 落在 $\mathbf b$ 方向上的影子有多长，再乘以 $\mathbf b$ 的长度。所以它衡量"两个方向有多重合"。</dd>
+								<dt>结构位置</dt>
+								<dd>内积的三维特例。它定义了长度（$|\mathbf a|^2=\mathbf a\cdot\mathbf a$）和角度，也就是说——<strong>几何是从点积长出来的</strong>。任意维都有，不限于三维。往上通向内积空间、正交投影、Gram–Schmidt、最小二乘、傅里叶分析。</dd>
+								<dt>为零意味着</dt>
+								<dd class="zero">垂直。没有影子，一个方向对另一个毫无贡献。</dd>
+							</dl>
+						</div>
+
+						<div class="concept" style="border-left-color:#3ec8d8">
+							<h3>叉积　<span class="en">Cross Product</span></h3>
+							<dl>
+								<dt>是什么</dt>
+								<dd>$\mathbf a\times\mathbf b$，两个向量给出一个<strong>向量</strong>，$|\mathbf a\times\mathbf b|=|\mathbf a||\mathbf b|\sin\theta$。</dd>
+								<dt>在量什么</dt>
+								<dd>一箭双雕：长度是两者张成的平行四边形<strong>面积</strong>，方向是这张平面的<strong>法向</strong>。</dd>
+								<dt>结构位置</dt>
+								<dd><strong>只有三维才有</strong>——它依赖"垂直于一张平面的方向唯一"，这在二维要跳出平面，在四维则有无穷多条。往上通向外积与微分形式，那才是任意维的版本。</dd>
+								<dt>为零意味着</dt>
+								<dd class="zero">平行。平行四边形被压成一条线，面积为零。</dd>
+							</dl>
+						</div>
+
+						<p>两个乘积不是并列的两种工具，而是把一对向量之间的全部信息<strong>瓜分干净了</strong>：</p>
+
+						<div class="eqbox" style="text-align:center;border-left-color:#3ec8d8">
+							$(\mathbf a\cdot\mathbf b)^2+|\mathbf a\times\mathbf b|^2=|\mathbf a|^2|\mathbf b|^2$
+							<br /><span class="lbl">一个拿走 $\cos$，一个拿走 $\sin$，加起来是全部</span>
+						</div>
+
+						<p>所以"该用哪个"从来不是难题：你要的是重合的那一半，还是张开的那一半。</p>
+
+						<span class="image main"><img src="images/vec_dotcross.png" alt="同一对向量的点积与叉积对照" /></span>
+
+						<div class="concept" style="border-left-color:#f0a63c">
+							<h3>行列式　<span class="en">Determinant</span></h3>
+							<dl>
+								<dt>是什么</dt>
+								<dd>$n$ 个 $n$ 维向量给出一个数。三阶就是混合积 $\mathbf a\cdot(\mathbf b\times\mathbf c)$。</dd>
+								<dt>在量什么</dt>
+								<dd><strong>有向体积</strong>。二阶是面积，三阶是体积，$n$ 阶是 $n$ 维体积。负号记录定向，也就是左手系还是右手系。</dd>
+								<dt>结构位置</dt>
+								<dd>把叉积的"面积"推广到任意维。它那些看着零碎的性质，全是几何：交换两行变号（定向翻转）、某行乘 $k$ 则值乘 $k$（一条边拉长）、<strong>某行加另一行的倍数值不变</strong>（切变，同底等高）。最后这条就是高斯消元的通行证。</dd>
+								<dt>为零意味着</dt>
+								<dd class="zero">撑不满。向量共面、线性相关、矩阵不可逆、方程组没有唯一解——这些说的是同一件事。</dd>
+							</dl>
+						</div>
+
+						<span class="image main"><img src="images/vec_detzero.png" alt="三向量共面时行列式为零" /></span>
+
+						<div class="concept" style="border-left-color:#6ed6a0">
+							<h3>平面方程　<span class="en">Plane</span></h3>
+							<dl>
+								<dt>是什么</dt>
+								<dd>$\mathbf n\cdot(\mathbf r-\mathbf r_0)=0$，展开就是 $Ax+By+Cz+D=0$。</dd>
+								<dt>在量什么</dt>
+								<dd>它就是<strong>点积的等值面</strong>。$\mathbf n\cdot\mathbf r=$ 常数，一个平面上的点在法向上的投影全都一样长。</dd>
+								<dt>结构位置</dt>
+								<dd>一般式里的系数 $(A,B,C)$ <strong>就是法向量本人</strong>——看到 $2x-3y+z=7$ 应该立刻读出法向 $(2,-3,1)$。点到平面的距离 $d=|\overrightarrow{AQ}\cdot\hat{\mathbf n}|$ 又是一次投影。往上通向超平面，机器学习里的分类边界就是它。</dd>
+								<dt>为零意味着</dt>
+								<dd class="zero">$\mathbf n=\mathbf 0$ 时方程退化，不再是平面。两平面的 $\mathbf n_1\times\mathbf n_2=\mathbf 0$ 则它们平行。</dd>
+							</dl>
+						</div>
+
+						<span class="image main"><img src="images/vec_plane.png" alt="平面的点法式" /></span>
+
+						<div class="concept" style="border-left-color:#ef6a5e">
+							<h3>高斯消元　<span class="en">Gaussian Elimination</span></h3>
+							<dl>
+								<dt>是什么</dt>
+								<dd>把方程组化成阶梯形再回代。每个方程是一张平面，解方程组就是<strong>求交集</strong>。</dd>
+								<dt>在量什么</dt>
+								<dd>它凭什么合法？因为 $\pi_1$ 与 $\pi_2$ 的任意线性组合，仍然穿过它们原来的交线（平面束）。所以换掉一个方程，一个解都不会丢。这正是行列式那条"某行加另一行的倍数值不变"的同一件事。</dd>
+								<dt>结构位置</dt>
+								<dd>秩 = 阶梯形里非零行的个数 = 真正独立的方程个数。于是 <strong>解的维数 = 3 − 秩</strong>，这就是秩–零化度定理在三维里的样子。往上通向 LU 分解和几乎所有科学计算的底层。</dd>
+								<dt>为零意味着</dt>
+								<dd class="zero">消到最后一行 $0\,0\,0\mid 0$ 是无穷多解（少了信息），$0\,0\,0\mid k$ 是无解（方程打架）。行列式只能分辨"是否唯一"，分不出这两者。</dd>
+							</dl>
+						</div>
+
+						<span class="image main"><img src="images/vec_planes3.png" alt="三平面相交的三种情形" /></span>
+
+						<hr class="major" />
+
+						<h2>它们在什么地方转着</h2>
+
+						<p>下面四个演示都能拖动旋转、拉滑块，参数是活的。它们不是同一个概念的四种画法，
+						而是同一个公式在四个不相干的行当里各干各的活。</p>
+
+						<div class="demos">
+							<a class="demo" href="demo-em.html" target="_blank" rel="noopener">
+								<span class="tag">Physics</span>
+								<strong>电通量与洛伦兹力</strong>
+								<span class="d">同一个夹角 θ：左边通量最大时，右边受力恰好为零。中间那根条显示 cos²θ 与 sin²θ 此消彼长。</span>
+								<span class="go">打开演示 →</span>
+							</a>
+							<a class="demo" href="demo-render.html" target="_blank" rel="noopener">
+								<span class="tag">Graphics</span>
+								<strong>渲染一个三角形</strong>
+								<span class="d">叉积决定哪些像素被覆盖，点积决定它们有多亮。转过 90° 时有向面积变负，整个三角形被背面剔除。</span>
+								<span class="go">打开演示 →</span>
+							</a>
+							<a class="demo" href="demo-shadow.html" target="_blank" rel="noopener">
+								<span class="tag">Architecture</span>
+								<strong>太阳移动，阴影落地</strong>
+								<span class="d">射线与地面求交，分母是一个点积；阴影面积用鞋带公式，每一项都是一个叉积。含真实天文位置与日晷。</span>
+								<span class="go">打开演示 →</span>
+							</a>
+							<a class="demo" href="demo-satellite.html" target="_blank" rel="noopener">
+								<span class="tag">Aerospace</span>
+								<strong>地面站对星</strong>
+								<span class="d">两次叉积在脚下搭出本地坐标系，三个点积量出仰角与方位角。公式实时代入数值写在画布角上。</span>
+								<span class="go">打开演示 →</span>
+							</a>
+						</div>
+
+						<p>四件毫不相干的事——电场穿过一块板、一个像素的明暗、正午楼房的影子、天线该抬多高——
+						背后是同一个投影。<strong>学过的东西，其实一直在你身边运转。</strong></p>
+
+						<hr class="major" />
+
+						<h2>藏在计算底下的那一页</h2>
+
+						<p>课本把这一章的题目写成"求某个向量"。但如果把它们并排放在一起，
+						会看到一件课本没挑明的事：<strong>它们全都是同一个方程组，
+						只是给的条件数量不同。</strong></p>
+
+						<div class="eqbox">
+							<span class="lbl">同一个 $A\mathbf x=\mathbf 0$，条件数决定答案的形状</span><br />
+							1 个方程 → 解空间 2 维，一整张平面　→　题目问"找两个不平行的"<br />
+							2 个方程 → 解空间 1 维，一条直线　　→　答案写成 $k(3,-1,1)$，$k\ne0$<br />
+							2 个方程 + 长度条件 → 两个点　　　　→　答案恰好是 $\pm$ 一对
+						</div>
+
+						<p>为什么 12L Q17 问"任意两个"，而 12N.1 Q11 的答案偏偏是"两个"？
+						不是出题人的偏好，是<strong>解空间的维数决定的</strong>。
+						同样，课本里"平行"、"共线"、"叉积为零"、"面积为零"分散在四个小节，
+						底下是同一件事：秩塌陷。</p>
+
+						<ul class="actions">
+							<li><a href="structure.html" class="button">全部题目的结构对照表<br /><span class="btn-en">The page beneath the calculations</span></a></li>
+						</ul>
+
+						<hr class="major" />
+
+						<h2>再往前一步</h2>
+
+						<p>这一章的东西在两个实战项目里真的跑起来了：舵机内部电位器的标定用到最小二乘，
+						开机平滑用的 S 曲线则是解一个三元方程组——<strong>行列式等于 2，非零，所以唯一解</strong>。
+						插值与拟合的分野，在那两页里看得最清楚。</p>
+
+						<p>而上面那张结构表里出现的秩、解空间、线性相关，正是下一个板块的入口——
+						把方程组写成矩阵之后，这些词会各自有一个几何形状。</p>
+
+						<ul class="actions">
+							<li><a href="matrix.html" class="button primary">下一板块 · 矩阵与变换<br /><span class="btn-en">Matrices &amp; Transformations</span></a></li>
+						</ul>
+
+						<ul class="actions">
+							<li><a href="solar-tracker.html" class="button">实战 · 开机那一下<br /><span class="btn-en">Homing &amp; S-Curve</span></a></li>
+							<li><a href="servo-calib.html" class="button">实战 · 舵机标定<br /><span class="btn-en">Servo Calibration</span></a></li>
+						</ul>
+
+						<h3>完整讲义</h3>
+						<p>页面上是骨架。完整版一万八千字，十四张三维配图全部内嵌，
+						含推导、例题与分层练习，Markdown 格式，可以直接用任何编辑器打开或打印。</p>
+
+						<ul class="actions">
+							<li><a href="#" class="button primary" data-gated="assets/data/vectors-notes.md">下载完整讲义<br /><span class="btn-en">Full notes (Markdown)</span></a></li>
+						</ul>
+
+						<!-- 友情码弹窗 -->
+						<div id="gate" class="gate" role="dialog" aria-modal="true" aria-labelledby="gateTitle" hidden>
+							<div class="gate-card">
+								<h3 id="gateTitle">请输入友情码</h3>
+								<p class="gate-en">Enter the friendship code</p>
+								<p class="gate-hint">线索：首页那句话是谁说的？填他的姓，拼音或英文都行。<br />
+								<span class="gate-en">Hint: who said the line on the homepage? His surname will do.</span></p>
+								<input type="text" id="gateInput" autocomplete="off" spellcheck="false" aria-label="友情码 friendship code" />
+								<p class="gate-err" id="gateErr" hidden>不对，再想想　Not quite — try again</p>
+								<div class="gate-actions">
+									<button type="button" class="button primary small" id="gateOk">确定　Enter</button>
+									<button type="button" class="button small" id="gateCancel">取消　Cancel</button>
+								</div>
+							</div>
+						</div>
+
+					</div>
+				</section>
+			</div>
+
+			<footer id="footer">
+				<div class="inner">
+					<ul class="icons">
+						<li><a href="#" class="icon brands alt fa-github"><span class="label">GitHub</span></a></li>
+						<li><a href="mailto:kneadu@outlook.com" class="icon solid alt fa-envelope"><span class="label">Email</span></a></li>
+					</ul>
+					<ul class="copyright">
+						<li>&copy; 看得见的数学</li><li>Design: Baoquan Zhang</li><li>Template: <a href="https://html5up.net">HTML5 UP</a></li>
+					</ul>
+				</div>
+			</footer>
+
+		</div>
+
+		<script src="assets/js/jquery.min.js"></script>
+		<script src="assets/js/jquery.scrolly.min.js"></script>
+		<script src="assets/js/jquery.scrollex.min.js"></script>
+		<script src="assets/js/browser.min.js"></script>
+		<script src="assets/js/breakpoints.min.js"></script>
+		<script src="assets/js/util.js"></script>
+		<script src="assets/js/main.js"></script>
+
+		<script>
+		(function () {
+			/* 友情码写在下面这行，改它即可（不区分大小写）。
+			   这只是礼节性的门，不是安全措施——码在源码里能看到。 */
+			var CODE = "poincare";
+			var ALIASES = ["poincare", "庞加莱", "彭加勒", "poincaré"];
+
+			var gate = document.getElementById("gate");
+			if (!gate) return;
+			var input  = document.getElementById("gateInput");
+			var errMsg = document.getElementById("gateErr");
+			var okBtn  = document.getElementById("gateOk");
+			var cancel = document.getElementById("gateCancel");
+			var pending = null, passed = false, lastFocus = null;
+
+			function norm(v){ return (v||"").trim().toLowerCase().replace(/\s+/g,""); }
+			function accepted(v){
+				var n = norm(v);
+				if (n === norm(CODE)) return true;
+				for (var i=0;i<ALIASES.length;i++) if (n === norm(ALIASES[i])) return true;
+				return false;
+			}
+			function grab(url){
+				var a=document.createElement("a");
+				a.href=url; a.download=url.split("/").pop();
+				document.body.appendChild(a); a.click(); document.body.removeChild(a);
+			}
+			function open_(){
+				lastFocus=document.activeElement;
+				gate.hidden=false; errMsg.hidden=true; input.value="";
+				setTimeout(function(){ input.focus(); },30);
+			}
+			function close_(){
+				gate.hidden=true; pending=null;
+				if(lastFocus&&lastFocus.focus) lastFocus.focus();
+			}
+			function submit(){
+				if(accepted(input.value)){
+					passed=true; var url=pending; close_(); if(url) grab(url);
+				}else{ errMsg.hidden=false; input.select(); }
+			}
+			Array.prototype.forEach.call(document.querySelectorAll("a[data-gated]"), function(a){
+				a.addEventListener("click", function(e){
+					e.preventDefault();
+					var url=a.getAttribute("data-gated");
+					if(passed){ grab(url); return; }
+					pending=url; open_();
+				});
+			});
+			okBtn.addEventListener("click", submit);
+			cancel.addEventListener("click", close_);
+			input.addEventListener("keydown", function(e){
+				if(e.key==="Enter"){ e.preventDefault(); submit(); }
+			});
+			document.addEventListener("keydown", function(e){
+				if(e.key==="Escape" && !gate.hidden) close_();
+			});
+			gate.addEventListener("click", function(e){ if(e.target===gate) close_(); });
+		})();
+		</script>
+
+	</body>
+</html>

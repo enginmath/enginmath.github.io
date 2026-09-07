@@ -1,0 +1,319 @@
+<!DOCTYPE HTML>
+<!--
+	Forty by HTML5 UP
+	html5up.net | @ajlkn
+	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+-->
+<html lang="zh-CN">
+	<head>
+		<title>藏在计算底下的那一页 · 看得见的数学</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+		<meta name="description" content="把课本第 12 章的题目还原成同一个方程组：条件数决定解空间维数，也就决定了答案该有几个。" />
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<style>
+			.btn-en { font-size: 0.78em; opacity: 0.72; letter-spacing: 0.02em; }
+			.eqbox {
+				background: #16223a; color: #e6ecf5;
+				border-left: 3px solid #b388ff; border-radius: 3px;
+				padding: 1.2rem 1.5rem; margin: 1.6rem 0; overflow-x: auto;
+				font-size: 0.95em; line-height: 2;
+			}
+			.eqbox .lbl { color: #93a4c0; font-size: 0.85em; }
+			.eqbox strong { color: #f7c579; }
+			table.alt td, table.alt th { font-size: 0.88em; }
+			table.alt .q { white-space: nowrap; font-weight: 600; }
+			table.alt .dim { color: #7f8790; }
+			.rank-drop { color: #c0392b; font-weight: 600; }
+			.takeaway {
+				border-left: 4px solid #f0a63c; padding: 0.2rem 0 0.2rem 1.4rem;
+				margin: 2rem 0;
+			}
+			.takeaway h3 { margin: 0 0 0.4rem; font-size: 1.05em; }
+			.takeaway p { margin: 0; }
+		</style>
+		<script>
+			window.MathJax = {
+				tex: { inlineMath: [['$','$']], displayMath: [['$$','$$']] },
+				options: { skipHtmlTags: ['script','noscript','style','textarea','pre','code'] }
+			};
+		</script>
+		<script id="MathJax-script" async
+			src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.min.js"></script>
+		<noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
+	</head>
+	<body class="is-preload">
+
+		<div id="wrapper">
+
+			<header id="header">
+				<a href="index.html" class="logo"><strong>看得见的数学</strong> <span>by BAOQUAN</span></a>
+				<nav><a href="#menu">Menu</a></nav>
+			</header>
+
+			<nav id="menu">
+				<ul class="links">
+					<li><a href="index.html">首页 &nbsp;Home</a></li>
+					<li><a href="vectors.html">向量与空间 &nbsp;Vectors</a></li>
+					<li><a href="matrix.html">矩阵与变换 &nbsp;Matrices</a></li>
+					<li><a href="calculus.html">变化与梯度 &nbsp;Calculus</a></li>
+					<li><a href="fitting.html">拟合与最小二乘 &nbsp;Least Squares</a></li>
+					<li><a href="neural.html">神经网络 &nbsp;Neural Networks</a></li>
+					<li><a href="fractals.html">分形与维数 &nbsp;Fractals</a></li>
+					<li><a href="solar-tracker.html">实战 · 开机那一下</a></li>
+					<li><a href="servo-calib.html">实战 · 舵机标定</a></li>
+				</ul>
+			</nav>
+
+			<div id="main" class="alt">
+				<section id="one">
+					<div class="inner">
+
+						<header class="major">
+							<h1>藏在计算底下的那一页</h1>
+							<p>课本把每道题写成"求某个向量"，这里把它们还原成"解某个方程组"。<br />
+							题号页码对应 Math AA HL 教材 p.272–322。</p>
+						</header>
+
+						<div class="eqbox" style="border-left-color:#f0a63c">
+							<span class="lbl">一句话</span><br />
+							看有几个方程，就知道答案有几个自由度。<br />
+							<strong>题目问"任意两个"还是"恰好两个"，不是出题人的偏好，是解空间的维数定的。</strong>
+						</div>
+
+						<h2>主表：这一章所有能写成 $A\mathbf x=\mathbf 0$ 的题</h2>
+
+						<div class="table-wrapper">
+							<table class="alt">
+								<thead>
+									<tr>
+										<th>题号（页）</th>
+										<th>课本怎么问</th>
+										<th>真实方程</th>
+										<th>$A$</th>
+										<th>rank</th>
+										<th>解空间</th>
+										<th>答案必然长什么样</th>
+									</tr>
+								</thead>
+								<tbody>
+									<tr>
+										<td class="q">12L Q17<br /><span class="dim">p.305</span></td>
+										<td>找两个不平行、都垂直于 $(1,2,-1)$ 的向量</td>
+										<td>$x+2y-z=0$</td>
+										<td>1×3</td><td>1</td>
+										<td><strong>2 维</strong><br />一整张平面</td>
+										<td>无穷多，且能挑出不平行的两个</td>
+									</tr>
+									<tr>
+										<td class="q">12L Q16<br /><span class="dim">p.305</span></td>
+										<td>找 $\mathbf a\ne\mathbf 0$ 使 $\mathbf a\cdot\mathbf b=\mathbf a\cdot\mathbf c$ 但 $\mathbf b\ne\mathbf c$</td>
+										<td>$\mathbf a\cdot(\mathbf b-\mathbf c)=0$</td>
+										<td>1×3</td><td>1</td>
+										<td>2 维</td>
+										<td>$\mathbf b-\mathbf c$ 在平面上随便取，非零即可</td>
+									</tr>
+									<tr>
+										<td class="q">12L Q9<br /><span class="dim">p.305</span></td>
+										<td>求两个长度 5、垂直于 $(2,3)$ 的向量</td>
+										<td>$2x+3y=0$（在 $\mathbb R^2$）</td>
+										<td>1×2</td><td>1</td>
+										<td>1 维<br />一条线</td>
+										<td>$\pm$（单位向量 × 5），<strong>恰好两个</strong></td>
+									</tr>
+									<tr>
+										<td class="q">Example 30<br /><span class="dim">p.304 · 12L Q8</span></td>
+										<td>求长度 3、垂直于 $(-1,4)$ 的向量</td>
+										<td>同上</td>
+										<td>1×2</td><td>1</td>
+										<td>1 维</td>
+										<td>先定方向，再定长度</td>
+									</tr>
+									<tr>
+										<td class="q">12L Q7<br /><span class="dim">p.304</span></td>
+										<td>求 $r,s,t$ 使 $\mathbf a,\mathbf b,\mathbf c$ 两两垂直</td>
+										<td>先 $\mathbf a\cdot\mathbf b=0$ 定 $r$；再 $\mathbf c\perp\mathbf a$、$\mathbf c\perp\mathbf b$</td>
+										<td>2×3</td><td>2</td>
+										<td>1 维</td>
+										<td>题目补的"第三分量 = 1"是在挑代表元</td>
+									</tr>
+									<tr>
+										<td class="q">课本推导<br /><span class="dim">p.309–310</span></td>
+										<td>（叉积公式本身的推导）</td>
+										<td>$\mathbf a\cdot\mathbf x=0$ 且 $\mathbf b\cdot\mathbf x=0$</td>
+										<td>2×3</td><td>2</td>
+										<td><strong>1 维</strong><br />一条线</td>
+										<td>通解 $t(\mathbf a\times\mathbf b)$，课本取 $t=1$</td>
+									</tr>
+									<tr>
+										<td class="q">Example 36<br /><span class="dim">p.313 · 12N.1 Q10</span></td>
+										<td>求<em>所有</em>垂直于 $\mathbf a$ 和 $\mathbf b$ 的向量</td>
+										<td>同上</td>
+										<td>2×3</td><td>2</td>
+										<td>1 维</td>
+										<td>答案写成 $k(3,-1,1)$，$k\ne0$</td>
+									</tr>
+									<tr>
+										<td class="q">12N.1 Q11<br /><span class="dim">p.313</span></td>
+										<td>再求其中长度 5 的两个</td>
+										<td>同上 $+\ |\mathbf x|=5$</td>
+										<td>2×3</td><td>2</td>
+										<td>1 维</td>
+										<td>$\pm\frac{5}{\sqrt{90}}(4,-5,-7)$，<strong>两个</strong></td>
+									</tr>
+									<tr>
+										<td class="q">Example 37<br /><span class="dim">p.314 · 12N.1 Q12</span></td>
+										<td>求垂直于过三点的平面的向量</td>
+										<td>$\overrightarrow{AB}\cdot\mathbf x=0$ 且 $\overrightarrow{AC}\cdot\mathbf x=0$</td>
+										<td>2×3</td><td>2</td>
+										<td>1 维</td>
+										<td>任意非零倍数都对</td>
+									</tr>
+									<tr>
+										<td class="q">12N.2 Q3<br /><span class="dim">p.315</span></td>
+										<td>证 $\mathbf a\times\mathbf b=\mathbf 0\iff\mathbf a\parallel\mathbf b$</td>
+										<td>两行成比例</td>
+										<td>2×3</td>
+										<td class="rank-drop">1</td>
+										<td class="rank-drop"><strong>2 维</strong></td>
+										<td>rank 塌陷：挑不出唯一方向</td>
+									</tr>
+									<tr>
+										<td class="q">12J Q3<br /><span class="dim">p.298</span></td>
+										<td>求 $r,s$ 使 $\mathbf a$、$\mathbf b$ 平行</td>
+										<td>$\mathbf a=k\mathbf b$</td>
+										<td>2×3</td>
+										<td class="rank-drop">1</td>
+										<td>—</td>
+										<td>塌陷条件反过来用，解出参数</td>
+									</tr>
+									<tr>
+										<td class="q">12J Q14, Q15<br /><span class="dim">p.299 · Review 12B Q26</span></td>
+										<td>证三点共线 / 求 $a,b$ 使共线</td>
+										<td>$(\mathbf b-\mathbf a)\times(\mathbf c-\mathbf b)=\mathbf 0$</td>
+										<td>2×3</td>
+										<td class="rank-drop">1</td>
+										<td class="rank-drop">2 维</td>
+										<td>同一个塌陷，换了个说法</td>
+									</tr>
+									<tr>
+										<td class="q">动画 11<br /><span class="dim">$[\mathbf a]_\times$</span></td>
+										<td>$\mathbf a\times(\mathbf b+k\mathbf a)=\mathbf a\times\mathbf b$</td>
+										<td>$[\mathbf a]_\times\mathbf x=\mathbf 0$</td>
+										<td>3×3 反对称</td><td>2</td>
+										<td>1 维<br />$\mathrm{span}\{\mathbf a\}$</td>
+										<td>$\mathbf a\ne\mathbf 0$ 时永不塌陷</td>
+									</tr>
+								</tbody>
+							</table>
+						</div>
+
+						<h2>另一族：$A\mathbf x=\mathbf b$，问的是"基"</h2>
+
+						<div class="table-wrapper">
+							<table class="alt">
+								<thead>
+									<tr><th>题号（页）</th><th>课本怎么问</th><th>真实问题</th></tr>
+								</thead>
+								<tbody>
+									<tr>
+										<td class="q">12G Q4<br /><span class="dim">p.288</span></td>
+										<td>求标量 $a,b,c$ 使 $a(1,1,0)+b(2,0,-1)+c(0,1,1)=(-1,3,3)$</td>
+										<td>三个列向量是不是 $\mathbb R^3$ 的一组基？rank 3 → 解唯一</td>
+									</tr>
+									<tr>
+										<td class="q">12E Q6<br /><span class="dim">p.284</span></td>
+										<td>求 $k$ 使两向量的组合等于给定向量</td>
+										<td>$\mathbb R^2$ 里的同一件事</td>
+									</tr>
+									<tr>
+										<td class="q">Review 12A Q9<br /><span class="dim">p.318</span></td>
+										<td>求 $a,b,c$</td>
+										<td>同上</td>
+									</tr>
+									<tr>
+										<td class="q">课本正文<br /><span class="dim">p.279–280</span></td>
+										<td>$\mathbf i,\mathbf j,\mathbf k$ 是 base unit vectors</td>
+										<td>这就是 $\mathbb R^3$ 的标准基</td>
+									</tr>
+									<tr>
+										<td class="q">Investigation 2<br /><span class="dim">p.299</span></td>
+										<td>linear combination</td>
+										<td>张成（span）的定义，课本没起名字</td>
+									</tr>
+								</tbody>
+							</table>
+						</div>
+
+						<hr class="major" />
+
+						<h2>三句话读法</h2>
+
+						<div class="takeaway">
+							<h3>一、看有几个方程，就知道答案有几个自由度</h3>
+							<p>一个方程 → 平面（无穷多、彼此不平行）；两个方程 → 直线（全部写成 $k\cdot$ 某向量）；
+							再加一个长度条件 → 正反两个点。<br />
+							这解释了为什么 12L Q17 问"任意两个"，而 12N.1 Q11 的答案偏偏是"两个"——
+							不是巧合，是维数决定的。</p>
+						</div>
+
+						<div class="takeaway" style="border-left-color:#ef6a5e">
+							<h3>二、rank 塌陷 = 平行</h3>
+							<p>$2\times3$ 矩阵的两行成比例 $\iff\mathbf a\parallel\mathbf b\iff\mathbf a\times\mathbf b=\mathbf 0\iff$
+							解空间从 1 维涨到 2 维。<br />
+							课本里"平行"、"共线"、"叉积为零"、"面积为零"是四个不同章节的说法，底下是同一件事。</p>
+						</div>
+
+						<div class="takeaway" style="border-left-color:#b388ff">
+							<h3>三、rank + nullity = 3，永远</h3>
+							<p>把 $T(\mathbf x)=\mathbf a\times\mathbf x$ 看成映射：nullity = 1（零空间是 $\mathrm{span}\{\mathbf a\}$），
+							rank = 2（像空间是 $\mathbf a^\perp$）。<br />
+							"$\mathbf a\times\mathbf b$ 永远垂直于 $\mathbf a$"这句话，说的就是<em>像空间等于 $\mathbf a^\perp$</em>。</p>
+						</div>
+
+						<hr class="major" />
+
+						<h2>那考试怎么办</h2>
+
+						<p>照原样答。写 $k(3,-1,1)$、写 $\pm(\dots)$，该带的参数带上、该给的两个答案给全——
+						<strong>这正是结构在评分表上的样子</strong>。上面这些词一个都不用出现在卷面上。</p>
+
+						<p>知道结构不是为了换一种写法，是为了在写下答案之前就知道它该有几个。</p>
+
+						<ul class="actions">
+							<li><a href="demo-vectors11.html" class="button" target="_blank" rel="noopener">看动画 7–9：课本题的解空间<br /><span class="btn-en">Watch scenes 7–9</span></a></li>
+							<li><a href="matrix.html" class="button primary">下一板块 · 矩阵与变换<br /><span class="btn-en">Matrices &amp; Transformations</span></a></li>
+						</ul>
+
+						<ul class="actions">
+							<li><a href="vectors.html" class="button">&larr; 回到 向量与空间<br /><span class="btn-en">Back to Vectors</span></a></li>
+						</ul>
+
+					</div>
+				</section>
+			</div>
+
+			<footer id="footer">
+				<div class="inner">
+					<ul class="icons">
+						<li><a href="#" class="icon brands alt fa-github"><span class="label">GitHub</span></a></li>
+						<li><a href="mailto:kneadu@outlook.com" class="icon solid alt fa-envelope"><span class="label">Email</span></a></li>
+					</ul>
+					<ul class="copyright">
+						<li>&copy; 看得见的数学</li><li>Design: Baoquan Zhang</li><li>Template: <a href="https://html5up.net">HTML5 UP</a></li>
+					</ul>
+				</div>
+			</footer>
+
+		</div>
+
+		<script src="assets/js/jquery.min.js"></script>
+		<script src="assets/js/jquery.scrolly.min.js"></script>
+		<script src="assets/js/jquery.scrollex.min.js"></script>
+		<script src="assets/js/browser.min.js"></script>
+		<script src="assets/js/breakpoints.min.js"></script>
+		<script src="assets/js/util.js"></script>
+		<script src="assets/js/main.js"></script>
+
+	</body>
+</html>
