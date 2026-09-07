@@ -1,0 +1,302 @@
+<!DOCTYPE HTML>
+<!--
+	Forty by HTML5 UP
+	html5up.net | @ajlkn
+	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+-->
+<html lang="zh-CN">
+	<head>
+		<title>分形与维数 · 看得见的数学</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+		<meta name="description" content="维数未必是整数。放大之后变成几份，这个数就是维数。面积可以任意小，方向却一根不丢。" />
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<style>
+			.btn-en { font-size: 0.78em; opacity: 0.72; letter-spacing: 0.02em; }
+			.eqbox {
+				background: #16223a; color: #e6ecf5;
+				border-left: 3px solid #b388ff; border-radius: 3px;
+				padding: 1.2rem 1.5rem; margin: 1.6rem 0; overflow-x: auto;
+				font-size: 0.95em; line-height: 2;
+			}
+			.eqbox .lbl { color: #93a4c0; font-size: 0.85em; }
+			.eqbox strong { color: #f7c579; }
+			.concept {
+				border: 1px solid #dfe3e8; border-left: 4px solid #b388ff;
+				border-radius: 4px; padding: 1.4rem 1.6rem 0.9rem; margin: 1.8rem 0;
+			}
+			.concept h3 { margin: 0 0 1rem; }
+			.concept h3 .en { font-size: 0.62em; opacity: 0.5; font-weight: 400; letter-spacing: 0.04em; }
+			.concept dl { margin: 0; }
+			.concept dt {
+				font-size: 0.72em; letter-spacing: 0.15em; text-transform: uppercase;
+				color: #8a94a6; margin-top: 0.9rem; font-weight: 600;
+			}
+			.concept dd { margin: 0.15rem 0 0; line-height: 1.75; }
+			.concept .zero { color: #c0392b; }
+			.demos { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.2rem; margin: 2rem 0; }
+			.demo {
+				display: block; text-decoration: none; border-radius: 4px;
+				padding: 1.4rem 1.5rem 1.5rem; color: #e6ecf5;
+				background: linear-gradient(160deg, #1b2b47 0%, #0f1826 100%);
+				border: 1px solid #2a3c5e; transition: transform .18s ease, border-color .18s ease;
+			}
+			.demo:hover { transform: translateY(-3px); border-color: #b388ff; }
+			.demo .tag {
+				font-size: 0.7em; letter-spacing: 0.14em; text-transform: uppercase;
+				color: #f0a63c; display: block; margin-bottom: 0.5rem;
+			}
+			.demo strong { display: block; font-size: 1.12em; color: #fff; margin-bottom: 0.45rem; }
+			.demo span.d { display: block; font-size: 0.86em; color: #93a4c0; line-height: 1.7; }
+			.demo .go { display: block; margin-top: 0.9rem; font-size: 0.82em; color: #8fe3ed; }
+			.ladder { border-left: 4px solid #f0a63c; padding: 0.2rem 0 0.2rem 1.4rem; margin: 2rem 0; }
+			.ladder h3 { margin: 0 0 0.4rem; font-size: 1.05em; }
+			.ladder p { margin: 0; }
+		</style>
+		<script>
+			window.MathJax = {
+				tex: { inlineMath: [['$','$']], displayMath: [['$$','$$']] },
+				options: { skipHtmlTags: ['script','noscript','style','textarea','pre','code'] }
+			};
+		</script>
+		<script id="MathJax-script" async
+			src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.min.js"></script>
+		<noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
+	</head>
+	<body class="is-preload">
+
+		<div id="wrapper">
+
+			<header id="header">
+				<a href="index.html" class="logo"><strong>看得见的数学</strong> <span>by BAOQUAN</span></a>
+				<nav><a href="#menu">Menu</a></nav>
+			</header>
+
+			<nav id="menu">
+				<ul class="links">
+					<li><a href="index.html">首页 &nbsp;Home</a></li>
+					<li><a href="vectors.html">向量与空间 &nbsp;Vectors</a></li>
+					<li><a href="matrix.html">矩阵与变换 &nbsp;Matrices</a></li>
+					<li><a href="calculus.html">变化与梯度 &nbsp;Calculus</a></li>
+					<li><a href="fitting.html">拟合与最小二乘 &nbsp;Least Squares</a></li>
+					<li><a href="neural.html">神经网络 &nbsp;Neural Networks</a></li>
+					<li><a href="fractals.html">分形与维数 &nbsp;Fractals</a></li>
+					<li><a href="solar-tracker.html">实战 · 开机那一下</a></li>
+					<li><a href="servo-calib.html">实战 · 舵机标定</a></li>
+				</ul>
+			</nav>
+
+			<div id="main" class="alt">
+				<section id="one">
+					<div class="inner">
+
+						<header class="major">
+							<h1>分形与维数</h1>
+							<p>Fractals &amp; Dimension<br />
+							一条线是一维，一张纸是二维。那么，一条无限曲折、却始终画在纸上的线，是几维？</p>
+						</header>
+
+						<span class="image main"><img src="images/frac_hero.png" alt="科赫雪花的每个凸起顶点上生长出谢尔宾斯基三角形" /></span>
+
+						<p>上面这张图里其实有两个分形：外轮廓是<strong>科赫曲线</strong>，
+						每个凸起的顶点上又长出一整棵<strong>谢尔宾斯基三角形</strong>。
+						它们的维数分别是 $1.262$ 和 $1.585$——都不是整数，而且不一样。</p>
+
+						<p>左上角那只小海龟停在起点上。整张图是它一笔一笔爬出来的，
+						规则只有短短几行，剩下的全是重复。</p>
+
+						<hr class="major" />
+
+						<h2>维数：放大之后变成几份</h2>
+
+						<p>"维数"这个词日常用得很随意——上下左右前后，三个方向，三维。
+						但这个说法碰到科赫曲线就卡住了：它画在一张纸上，处处不光滑，
+						长度无限而面积为零。说它一维，太少；说它二维，太多。</p>
+
+						<p>换一个问法就通了：<strong>把图形放大 $s$ 倍，它变成了几份自己？</strong></p>
+
+						<span class="image main"><img src="images/frac_dim.png" alt="自相似维数：放大 s 倍得到 N 份，D = log N / log s" /></span>
+
+						<div class="eqbox" style="text-align:center;border-left-color:#6ed6a0">
+							$N=s^{D}\quad\Longrightarrow\quad D=\dfrac{\log N}{\log s}$
+						</div>
+
+						<p>线段放大 3 倍得到 3 份，$D=1$；正方形放大 3 倍得到 9 份，$D=2$——
+						整数维只是这条公式的特例。而科赫曲线放大 3 倍得到 4 份，
+						$D=\log_3 4\approx1.262$，<strong>它卡在一维和二维之间</strong>。</p>
+
+						<div class="ladder">
+							<h3>这个数字在说什么</h3>
+							<p>$1.262$ 的意思是：它比直线更"占地方"，但又填不满平面。
+							维数在这里不再是"有几个方向"，而是<strong>一种衡量粗糙程度的尺度</strong>——
+							海岸线、血管、闪电、股价曲线，都能用它量。</p>
+						</div>
+
+						<div class="demos" style="grid-template-columns:1fr">
+							<a class="demo" href="demo-fractal.html" target="_blank" rel="noopener">
+								<span class="tag">Core</span>
+								<strong>混合分形：科赫 × 谢尔宾斯基</strong>
+								<span class="d">两个滑块分别控制两种分形的递归层数，能看着海龟一笔一笔画出来，
+								也能直接跳到结果。层数每加一，图元数量乘几倍——递归的代价在这里看得见。</span>
+								<span class="go">打开演示 →</span>
+							</a>
+						</div>
+
+						<hr class="major" />
+
+						<h2>另一条线：测度</h2>
+
+						<p>维数问"有多粗糙"，<strong>测度</strong>问一个更基本的问题：<em>这个集合有多大？</em>
+						长度、面积、体积、概率，都是测度。</p>
+
+						<p>听起来平淡，但它能通向很反直觉的地方。下面这个构造叫 <strong>Perron 树</strong>：
+						把一个三角形切成 $2^n$ 根细条，再让它们互相重叠着平移。</p>
+
+						<div class="eqbox">
+							<span class="lbl">两件同时发生的事</span><br />
+							<strong>面积可以压到任意小</strong>——重叠吃掉了并集的面积<br />
+							<strong>方向却一根都没丢</strong>——每根细条只是平移，朝向分毫未变
+						</div>
+
+						<p>于是你得到一个面积几乎为零、却包含了所有方向的集合。
+						这正是<strong>Kakeya 问题</strong>的核心：一根针要在平面上转满一圈，
+						扫过的面积可以小到任意程度。</p>
+
+						<div class="demos">
+							<a class="demo" href="demo-perron.html" target="_blank" rel="noopener">
+								<span class="tag">Measure</span>
+								<strong>Perron 树 · 面积与方向</strong>
+								<span class="d">四联图：原三角形按方向着色、平移后的树、面积随层数下降的曲线、
+								以及前后完全一致的方向谱。拖重叠系数 $\alpha$，看蓝线掉下去而红线纹丝不动。</span>
+								<span class="go">打开演示 →</span>
+							</a>
+							<a class="demo" href="demo-perron-anim.html" target="_blank" rel="noopener">
+								<span class="tag">Measure</span>
+								<strong>面积只在旋转瞬间产生</strong>
+								<span class="d">贴着树看和远远地看，是两回事。针沿着树移动时几乎不扫面积，
+								只有在拐弯的那一瞬间才付出代价。</span>
+								<span class="go">打开演示 →</span>
+							</a>
+						</div>
+
+						<div class="ladder" style="border-left-color:#3ec8d8">
+							<h3>两条线在这里合流</h3>
+							<p>Perron 树的并集面积是怎么算出来的？把所有小三角形画到一张离屏画布上，
+							数被涂色的像素占了多大比例。<strong>这跟用盒计数法估分形维数是同一个思路</strong>——
+							拿一把有刻度的尺子去量，看刻度变细时读数怎么变。测度和维数，
+							说到底都是"用尺子量集合"这件事的不同问法。</p>
+						</div>
+
+						<hr class="major" />
+
+						<h2>四个概念</h2>
+
+						<div class="concept">
+							<h3>自相似　<span class="en">Self-similarity</span></h3>
+							<dl>
+								<dt>是什么</dt>
+								<dd>局部放大之后，和整体长得一样。</dd>
+								<dt>怎么造出来</dt>
+								<dd>写一条规则，然后对自己反复施加。科赫曲线的规则只有一句：
+								把每段中间三分之一顶出一个尖。递归深度加一，细节多一层。</dd>
+								<dt>结构位置</dt>
+								<dd>严格自相似的分形（科赫、谢尔宾斯基）可以用<strong>迭代函数系统</strong>描述——
+								每一步都是一个矩阵变换加一次平移，正是
+								<a href="matrix.html">矩阵板块</a>里那套东西在反复作用。</dd>
+								<dt>近似自相似</dt>
+								<dd class="zero">自然界的分形（海岸线、云、树枝）只是统计意义上自相似，
+								放大之后"像"但不"等于"。</dd>
+							</dl>
+						</div>
+
+						<div class="concept" style="border-left-color:#6ed6a0">
+							<h3>分形维数　<span class="en">Fractal Dimension</span></h3>
+							<dl>
+								<dt>是什么</dt>
+								<dd>$D=\dfrac{\log N}{\log s}$，放大 $s$ 倍得到 $N$ 份自己。</dd>
+								<dt>在量什么</dt>
+								<dd>粗糙程度、填充空间的能力。$D$ 越接近 2，这条曲线越"想"填满平面。</dd>
+								<dt>怎么测真实物体</dt>
+								<dd><strong>盒计数法</strong>：用边长 $\varepsilon$ 的方格盖住图形，
+								数需要几个格子 $N(\varepsilon)$，然后看 $\log N$ 对 $\log(1/\varepsilon)$ 的斜率。
+								英国海岸线约 $1.25$，挪威峡湾约 $1.52$。</dd>
+								<dt>为什么尺子越短海岸线越长</dt>
+								<dd class="zero">因为 $D>1$。量到的长度随尺子变短而发散，
+								所以"海岸线有多长"这个问题本身就没有确定答案。</dd>
+							</dl>
+						</div>
+
+						<div class="concept" style="border-left-color:#f0a63c">
+							<h3>测度　<span class="en">Measure</span></h3>
+							<dl>
+								<dt>是什么</dt>
+								<dd>给集合分配一个"大小"的规则。长度、面积、体积、概率都是测度。</dd>
+								<dt>基本要求</dt>
+								<dd>非负；空集为零；互不相交的集合可以把大小加起来。
+								看着平常，但正是最后这条让"面积"这个概念站得住。</dd>
+								<dt>结构位置</dt>
+								<dd>积分就建在测度上——<a href="calculus.html">微积分板块</a>里
+								"把 $f\,dx$ 累起来"的那个 $dx$，严格说就是一个测度。</dd>
+								<dt>零测集</dt>
+								<dd class="zero">面积为零但点数无穷多的集合。Perron 树逼近的就是这种东西：
+								<strong>什么都装不下，却装得下所有方向</strong>。</dd>
+							</dl>
+						</div>
+
+						<div class="concept" style="border-left-color:#b388ff">
+							<h3>递归　<span class="en">Recursion</span></h3>
+							<dl>
+								<dt>是什么</dt>
+								<dd>函数调用自己，直到触底返回。</dd>
+								<dt>在分形里的角色</dt>
+								<dd>分形的定义天然是递归的，代码也就写得极短。
+								画出上面那张图的核心不过十几行——<strong>复杂度在图里，不在代码里</strong>。</dd>
+								<dt>代价</dt>
+								<dd>图元数量随深度指数增长。科赫每加一层线段数乘 4，
+								谢尔宾斯基每加一层三角形数乘 3。演示里把层数拉满，浏览器会明显卡顿。</dd>
+								<dt>触底条件写错</dt>
+								<dd class="zero">无限递归，栈溢出。这是写分形代码最常见的一个错。</dd>
+							</dl>
+						</div>
+
+						<hr class="major" />
+
+						<h2>一句话</h2>
+
+						<blockquote>整数维是特例，不是常态。<br />
+						<strong>自然界里几乎没有光滑的东西——云不是球，山不是锥，海岸线不是圆弧。</strong><br />
+						分形几何做的事，是给这些"不规则"找到一把能量的尺子。</blockquote>
+
+						<ul class="actions">
+							<li><a href="calculus.html" class="button">&larr; 变化与梯度<br /><span class="btn-en">Calculus</span></a></li>
+							<li><a href="index.html" class="button primary">回到首页<br /><span class="btn-en">All eight</span></a></li>
+						</ul>
+
+					</div>
+				</section>
+			</div>
+
+			<footer id="footer">
+				<div class="inner">
+					<ul class="icons">
+						<li><a href="#" class="icon brands alt fa-github"><span class="label">GitHub</span></a></li>
+						<li><a href="mailto:kneadu@outlook.com" class="icon solid alt fa-envelope"><span class="label">Email</span></a></li>
+					</ul>
+					<ul class="copyright">
+						<li>&copy; 看得见的数学</li><li>Design: Baoquan Zhang</li><li>Template: <a href="https://html5up.net">HTML5 UP</a></li>
+					</ul>
+				</div>
+			</footer>
+
+		</div>
+
+		<script src="assets/js/jquery.min.js"></script>
+		<script src="assets/js/jquery.scrolly.min.js"></script>
+		<script src="assets/js/jquery.scrollex.min.js"></script>
+		<script src="assets/js/browser.min.js"></script>
+		<script src="assets/js/breakpoints.min.js"></script>
+		<script src="assets/js/util.js"></script>
+		<script src="assets/js/main.js"></script>
+
+	</body>
+</html>

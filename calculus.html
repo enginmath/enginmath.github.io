@@ -1,0 +1,441 @@
+<!DOCTYPE HTML>
+<!--
+	Forty by HTML5 UP
+	html5up.net | @ajlkn
+	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+-->
+<html lang="zh-CN">
+	<head>
+		<title>变化与梯度 · 看得见的数学</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+		<meta name="description" content="导数是斜率的极限，微分是最好的直线近似，积分是把变化累回去。三件事，一个演示。" />
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<style>
+			.btn-en { font-size: 0.78em; opacity: 0.72; letter-spacing: 0.02em; }
+			.eqbox {
+				background: #16223a; color: #e6ecf5;
+				border-left: 3px solid #b388ff; border-radius: 3px;
+				padding: 1.2rem 1.5rem; margin: 1.6rem 0; overflow-x: auto;
+				font-size: 0.95em; line-height: 2;
+			}
+			.eqbox .lbl { color: #93a4c0; font-size: 0.85em; }
+			.eqbox strong { color: #f7c579; }
+			.concept {
+				border: 1px solid #dfe3e8; border-left: 4px solid #b388ff;
+				border-radius: 4px; padding: 1.4rem 1.6rem 0.9rem; margin: 1.8rem 0;
+			}
+			.concept h3 { margin: 0 0 1rem; }
+			.concept h3 .en { font-size: 0.62em; opacity: 0.5; font-weight: 400; letter-spacing: 0.04em; }
+			.concept dl { margin: 0; }
+			.concept dt {
+				font-size: 0.72em; letter-spacing: 0.15em; text-transform: uppercase;
+				color: #8a94a6; margin-top: 0.9rem; font-weight: 600;
+			}
+			.concept dd { margin: 0.15rem 0 0; line-height: 1.75; }
+			.concept .zero { color: #c0392b; }
+			.demos { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.2rem; margin: 2rem 0; }
+			.demo {
+				display: block; text-decoration: none; border-radius: 4px;
+				padding: 1.4rem 1.5rem 1.5rem; color: #e6ecf5;
+				background: linear-gradient(160deg, #1b2b47 0%, #0f1826 100%);
+				border: 1px solid #2a3c5e; transition: transform .18s ease, border-color .18s ease;
+			}
+			.demo:hover { transform: translateY(-3px); border-color: #b388ff; }
+			.demo .tag {
+				font-size: 0.7em; letter-spacing: 0.14em; text-transform: uppercase;
+				color: #f0a63c; display: block; margin-bottom: 0.5rem;
+			}
+			.demo strong { display: block; font-size: 1.12em; color: #fff; margin-bottom: 0.45rem; }
+			.demo span.d { display: block; font-size: 0.86em; color: #93a4c0; line-height: 1.7; }
+			.demo .go { display: block; margin-top: 0.9rem; font-size: 0.82em; color: #8fe3ed; }
+			.ladder { border-left: 4px solid #f0a63c; padding: 0.2rem 0 0.2rem 1.4rem; margin: 2rem 0; }
+			.ladder h3 { margin: 0 0 0.4rem; font-size: 1.05em; }
+			.ladder p { margin: 0; }
+			.gate {
+				position: fixed; inset: 0; z-index: 10000;
+				display: flex; align-items: center; justify-content: center; padding: 1.5rem;
+				background: rgba(13, 22, 38, 0.55);
+				backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+			}
+			.gate[hidden] { display: none; }
+			.gate-card {
+				background: #16223a; color: #e6ecf5; border: 1px solid #2a3c5e; border-radius: 5px;
+				padding: 2.1rem 2.25rem 1.8rem; max-width: 27rem; width: 100%;
+				box-shadow: 0 1.4rem 3.5rem rgba(0,0,0,.45); text-align: center;
+			}
+			.gate-card h3 { margin: 0 0 0.3rem; color: #f7c579; font-size: 1.15em; }
+			.gate-en { opacity: 0.55; font-size: 0.85em; margin: 0 0 0.4rem; }
+			.gate-hint { font-size: 0.85em; color: #93a4c0; margin: 0.9rem 0 1.3rem; line-height: 1.8; }
+			.gate-card input[type="text"] {
+				background: #0d1626; border: 1px solid #2a3c5e; color: #e6ecf5; border-radius: 3px;
+				text-align: center; font-size: 1.15em; letter-spacing: 0.08em; margin-bottom: 0.8rem;
+			}
+			.gate-card input[type="text"]:focus { border-color: #b388ff; box-shadow: none; }
+			.gate-err { color: #ef6a5e; font-size: 0.85em; margin: 0 0 0.8rem; }
+			.gate-err[hidden] { display: none; }
+			.gate-actions { display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap; }
+			.gate-actions .button { margin: 0; }
+			.gate-actions .button:not(.primary) { color: #93a4c0; box-shadow: inset 0 0 0 1px #2a3c5e; }
+		</style>
+		<script>
+			window.MathJax = {
+				tex: { inlineMath: [['$','$']], displayMath: [['$$','$$']] },
+				options: { skipHtmlTags: ['script','noscript','style','textarea','pre','code'] }
+			};
+		</script>
+		<script id="MathJax-script" async
+			src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.min.js"></script>
+		<noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
+	</head>
+	<body class="is-preload">
+
+		<div id="wrapper">
+
+			<header id="header">
+				<a href="index.html" class="logo"><strong>看得见的数学</strong> <span>by BAOQUAN</span></a>
+				<nav><a href="#menu">Menu</a></nav>
+			</header>
+
+			<nav id="menu">
+				<ul class="links">
+					<li><a href="index.html">首页 &nbsp;Home</a></li>
+					<li><a href="vectors.html">向量与空间 &nbsp;Vectors</a></li>
+					<li><a href="matrix.html">矩阵与变换 &nbsp;Matrices</a></li>
+					<li><a href="calculus.html">变化与梯度 &nbsp;Calculus</a></li>
+					<li><a href="fitting.html">拟合与最小二乘 &nbsp;Least Squares</a></li>
+					<li><a href="neural.html">神经网络 &nbsp;Neural Networks</a></li>
+					<li><a href="fractals.html">分形与维数 &nbsp;Fractals</a></li>
+					<li><a href="solar-tracker.html">实战 · 开机那一下</a></li>
+					<li><a href="servo-calib.html">实战 · 舵机标定</a></li>
+				</ul>
+			</nav>
+
+			<div id="main" class="alt">
+				<section id="one">
+					<div class="inner">
+
+						<header class="major">
+							<h1>变化与梯度</h1>
+							<p>Change &amp; Gradients<br />
+							导数是斜率的极限，微分是最好的那条直线，积分是把变化累回去。<br />
+							三件事其实是一件事的三个方向。</p>
+						</header>
+
+						<h2>先把三个词分清</h2>
+
+						<p>导数、微分、积分，中学里常被当成三套计算规则背下来。
+						但它们各自回答一个很具体的问题：</p>
+
+						<div class="eqbox">
+							<span class="lbl">三个问题</span><br />
+							<strong>导数</strong>：此刻变化<em>多快</em>？　　　　　→　一个数，切线的斜率<br />
+							<strong>微分</strong>：往前挪一点点，<em>大约</em>变多少？→　一个近似，$dy=f'(x)\,dx$<br />
+							<strong>积分</strong>：把这些变化<em>累</em>起来是多少？　→　一段面积
+						</div>
+
+						<p>它们的关系是：导数把函数拆成瞬时变化率，积分把瞬时变化率装回去，
+						微分是中间那座桥——它把"变化率"翻译成"实际变了多少"。</p>
+
+						<div class="demos" style="grid-template-columns:1fr">
+							<a class="demo" href="demo-calculus3d.html" target="_blank" rel="noopener">
+								<span class="tag">Core</span>
+								<strong>切线 · 小台阶 · 柱体</strong>
+								<span class="d">一个三维场景里同时放着三样东西：金色切线是导数，红色小台阶是微分，
+								紫色柱体是积分。拖动 $x$ 看它们一起动，改分割数 $n$ 看柱体如何逼近真实面积，
+								蓝色那条是原函数 $F(x)$。</span>
+								<span class="go">打开演示 →</span>
+							</a>
+						</div>
+
+						<hr class="major" />
+
+						<h2>导数：不是斜率，是斜率的极限</h2>
+
+						<span class="image main"><img src="images/calc1_secant.png" alt="割线斜率随 h 趋于零收敛到切线斜率" /></span>
+
+						<p>取曲线上一点 $P$，再取旁边一点 $Q$，两点连线的斜率好算——
+						这是<strong>割线</strong>，是初中就会的东西。</p>
+
+						<p>问题在于"此刻的斜率"。$Q$ 和 $P$ 重合时，$\frac{0}{0}$ 没有意义。
+						所以导数不直接问那个值，而是问：<strong>让 $Q$ 一路滑向 $P$，割线斜率会不会趋向某个确定的数？</strong></p>
+
+						<div class="eqbox" style="text-align:center;border-left-color:#6ed6a0">
+							$f'(x_0)=\lim_{h\to0}\dfrac{f(x_0+h)-f(x_0)}{h}$
+						</div>
+
+						<p>右图就是这个极限过程：横轴是 $h$，越往右越小，纵轴是对应的割线斜率。
+						$h$ 还没到零，斜率已经在往 $0.80$ 收拢了。<strong>导数是这个"要去哪儿"，不是"到了哪儿"。</strong></p>
+
+						<hr class="major" />
+
+						<h2>微分：最好的那条直线</h2>
+
+						<p>知道了斜率，就能拿它做近似。在 $x_0$ 附近，用切线代替曲线：</p>
+
+						<div class="eqbox" style="text-align:center">
+							$f(x_0+dx)\approx f(x_0)+\underbrace{f'(x_0)\,dx}_{dy}$
+						</div>
+
+						<p>演示里那个红色小台阶画的就是这件事——横着走 $dx$，竖着升 $dy$。
+						把 $dx$ 拖大，你会看到台阶顶端离曲线越来越远；拖小，两者贴合。</p>
+
+						<div class="ladder">
+							<h3>为什么值得单独起个名</h3>
+							<p>因为几乎所有的实际计算都在用它。误差传递、牛顿法、优化的每一步、
+							神经网络反向传播里的每一次更新——都是"在当前点，用直线代替曲线，走一小步"。
+							<strong>微分是把非线性问题临时当成线性来处理的通行证。</strong></p>
+						</div>
+
+						<hr class="major" />
+
+						<h2>积分与基本定理</h2>
+
+						<span class="image main"><img src="images/calc2_ftc.png" alt="面积函数的导数就是被积函数" /></span>
+
+						<p>积分是把无数个"$f(x)\cdot dx$"加起来。演示里那些紫色柱体就是这些小块，
+						把分割数 $n$ 调大，柱体越来越细，总和越来越接近曲线下的真实面积。</p>
+
+						<p>关键的一步在右图。把"从 $a$ 到 $x$ 的面积"看成一个新函数 $F(x)$，
+						问它的导数是多少——$x$ 往前挪一点点 $dx$，面积就多出细细的一条，
+						高是 $f(x)$、宽是 $dx$。所以</p>
+
+						<div class="eqbox" style="text-align:center;border-left-color:#f0a63c">
+							$\dfrac{dF}{dx}=\dfrac{f(x)\,dx}{dx}=f(x)$
+						</div>
+
+						<p>这就是<strong>微积分基本定理</strong>：面积函数的导数，就是原来那条曲线。
+						积分和求导是互逆的两个动作——这句话让"算面积"这件难事，
+						变成了"找一个导数等于 $f$ 的函数"这件相对容易的事。</p>
+
+						<hr class="major" />
+
+						<h2>四个概念</h2>
+
+						<div class="concept">
+							<h3>极限　<span class="en">Limit</span></h3>
+							<dl>
+								<dt>是什么</dt>
+								<dd>不问"到了哪儿"，问"要去哪儿"。</dd>
+								<dt>为什么必须有</dt>
+								<dd>因为"此刻的速度"本身是个悖论：任何一个瞬间，物体都没有移动。
+								极限绕开了这个悖论——不看那一点，看逼近那一点的过程。</dd>
+								<dt>结构位置</dt>
+								<dd>导数、积分、连续、级数，整个微积分都架在它上面。</dd>
+								<dt>不存在意味着</dt>
+								<dd class="zero">函数在那一点不可导。比如尖角处，左右两边的割线斜率趋向不同的数。</dd>
+							</dl>
+						</div>
+
+						<div class="concept" style="border-left-color:#f0a63c">
+							<h3>导数　<span class="en">Derivative</span></h3>
+							<dl>
+								<dt>是什么</dt>
+								<dd>$f'(x)$，割线斜率在 $h\to0$ 时的极限。</dd>
+								<dt>在量什么</dt>
+								<dd>变化的快慢。位置的导数是速度，速度的导数是加速度。</dd>
+								<dt>结构位置</dt>
+								<dd>多元函数里，每个方向都有一个导数，它们打包成<strong>梯度</strong>。
+								梯度指向上升最快的方向，所以"沿负梯度走"就是下山——这是所有优化算法的起点。</dd>
+								<dt>为零意味着</dt>
+								<dd class="zero">切线水平：极大、极小或拐点。最小二乘就是靠"令导数为零"解出来的。</dd>
+							</dl>
+						</div>
+
+						<div class="concept" style="border-left-color:#ef6a5e">
+							<h3>链式法则　<span class="en">Chain Rule</span></h3>
+							<dl>
+								<dt>是什么</dt>
+								<dd>$\dfrac{dz}{dx}=\dfrac{dz}{dy}\cdot\dfrac{dy}{dx}$，一层套一层时导数相乘。</dd>
+								<dt>在量什么</dt>
+								<dd>影响是怎么传下去的。$x$ 动一点，$y$ 跟着动，$z$ 再跟着动——
+								总影响就是每一层放大倍数的乘积。</dd>
+								<dt>结构位置</dt>
+								<dd>它是<strong>反向传播的全部内容</strong>。神经网络几十层，
+								求某个权重对最终误差的影响，就是把这条链从后往前乘一遍。</dd>
+								<dt>某一环为零意味着</dt>
+								<dd class="zero">整条链断掉，梯度传不回去——这就是深层网络里的"梯度消失"。</dd>
+							</dl>
+						</div>
+
+						<div class="concept" style="border-left-color:#6ed6a0">
+							<h3>积分　<span class="en">Integral</span></h3>
+							<dl>
+								<dt>是什么</dt>
+								<dd>$\int_a^b f(x)\,dx$，把无数个 $f\cdot dx$ 累加起来的极限。</dd>
+								<dt>在量什么</dt>
+								<dd>累积量。速度积出路程，功率积出能量，概率密度积出概率。</dd>
+								<dt>结构位置</dt>
+								<dd>与求导互逆（微积分基本定理）。多重积分算体积，
+								曲面积分算通量——<a href="vectors.html">向量板块</a>里那个电通量
+								$\Phi=\mathbf E\cdot\mathbf A$，正是曲面积分在均匀场下的简化。</dd>
+								<dt>算不出解析式意味着</dt>
+								<dd class="zero">绝大多数积分都没有初等原函数。这时就用数值积分——
+								本质上就是演示里那些柱体，只是分得更细、加权更聪明。</dd>
+							</dl>
+						</div>
+
+						<hr class="major" />
+
+						<h2>延伸：卷积——积分在工程里的样子</h2>
+
+						<p>上面那个积分是"把 $f(x)\,dx$ 累起来"。把被累加的东西换一换，
+						就得到工程里用得最多的一种积分：</p>
+
+						<div class="eqbox" style="text-align:center;border-left-color:#3ec8d8">
+							$y(t)=\displaystyle\int x(\tau)\,h(t-\tau)\,d\tau$
+							<br /><span class="lbl">卷积 convolution</span>
+						</div>
+
+						<div class="ladder" style="border-left-color:#3ec8d8">
+							<h3>它在说一件很朴素的事</h3>
+							<p>敲一记，系统会响一阵子——这段回响叫<strong>冲击响应</strong> $h(t)$。<br />
+							任何输入都可以看成无数记轻重不同的敲，每一记都引出一段自己的回响，
+							彼此错开时间叠在一起。<strong>把这些回响加起来，就是卷积。</strong><br />
+							积分号在这里干的活，正是"把无穷多份叠加起来"。</p>
+						</div>
+
+						<p>音箱的混响、镜头的虚化、通信里的多径衰落，背后都是同一个式子。
+						下面这个探器把它拆成七块：一记尽量尖的脉冲进去，看信道怎么把它撕成几记、
+						再揉圆成"草垛"，以及能不能用一个逆函数把草垛扳回原来的针。</p>
+
+						<div class="demos" style="grid-template-columns:1fr">
+							<a class="demo" href="demo-cir.html" target="_blank" rel="noopener"
+							   style="background:linear-gradient(160deg,#132b3a 0%,#0f1826 100%)">
+								<span class="tag">Engineering</span>
+								<strong>信道冲击响应探器</strong>
+								<span class="d">拖多径的延迟和幅度，看一记针如何变成草垛；
+								时域越散，频域的坑越深。最后两块是均衡器——在频域的坑里硬除会把噪声一起放大，
+								这就是 ZF 与 MMSE 的分野。</span>
+								<span class="go">打开演示 →</span>
+							</a>
+						</div>
+
+						<p>三件容易记反的事，写在这儿：<strong>冲击函数是探针，不是草垛</strong>；
+						<strong>谁先响看第②块的左右，不看第⑤块的相角</strong>；
+						<strong>修复成功不代表信道变了</strong>——变的只是你又乘了一个 $G$。</p>
+
+						<ul class="actions">
+							<li><a href="#" class="button" data-gated="assets/data/cir-manual.md">下载 · 探器阅读手册<br /><span class="btn-en">Reading the seven panels</span></a></li>
+						</ul>
+
+						<!-- 友情码弹窗 -->
+						<div id="gate" class="gate" role="dialog" aria-modal="true" aria-labelledby="gateTitle" hidden>
+							<div class="gate-card">
+								<h3 id="gateTitle">请输入友情码</h3>
+								<p class="gate-en">Enter the friendship code</p>
+								<p class="gate-hint">线索：首页那句话是谁说的？填他的姓，拼音或英文都行。<br />
+								<span class="gate-en">Hint: who said the line on the homepage? His surname will do.</span></p>
+								<input type="text" id="gateInput" autocomplete="off" spellcheck="false" aria-label="友情码 friendship code" />
+								<p class="gate-err" id="gateErr" hidden>不对，再想想　Not quite — try again</p>
+								<div class="gate-actions">
+									<button type="button" class="button primary small" id="gateOk">确定　Enter</button>
+									<button type="button" class="button small" id="gateCancel">取消　Cancel</button>
+								</div>
+							</div>
+						</div>
+
+						<hr class="major" />
+
+						<h2>在别的板块里，它长这样</h2>
+
+						<div class="ladder" style="border-left-color:#b388ff">
+							<h3>S 曲线：六个条件里有四个是导数条件</h3>
+							<p>开机平滑那条 $s(t)=6t^5-15t^4+10t^3$，六个边界条件中
+							$s'(0)=s'(1)=0$ 管的是起停速度、$s''(0)=s''(1)=0$ 管的是起停加速度。
+							没有导数这个概念，"平顺"就只是一种感觉，写不成方程。<br />
+							见 → <a href="solar-tracker.html">实战 · 开机那一下</a></p>
+						</div>
+
+						<div class="ladder" style="border-left-color:#6ed6a0">
+							<h3>最小二乘：令导数为零</h3>
+							<p>残差平方和 $S(\mathbf c)=\lVert A\mathbf c-\mathbf b\rVert^2$ 是个开口向上的碗，
+							碗底就是最优解。找碗底的办法正是"对每个系数求偏导、令其为零"——
+							这是推出正规方程的三条路之一。<br />
+							见 → <a href="fitting.html">拟合与最小二乘</a></p>
+						</div>
+
+						<div class="ladder" style="border-left-color:#ef6a5e">
+							<h3>神经网络：链式法则跑几万遍</h3>
+							<p>舵机标定那组数据，小网络跑三万轮梯度下降才追平最小二乘一步解出的结果。
+							每一轮的核心动作，都是用链式法则把误差的责任分摊回每个权重。<br />
+							见 → <a href="neural.html">神经网络</a></p>
+						</div>
+
+						<ul class="actions">
+							<li><a href="matrix.html" class="button">&larr; 矩阵与变换<br /><span class="btn-en">Matrices</span></a></li>
+							<li><a href="fitting.html" class="button primary">拟合与最小二乘<br /><span class="btn-en">Least Squares</span></a></li>
+						</ul>
+
+					</div>
+				</section>
+			</div>
+
+			<footer id="footer">
+				<div class="inner">
+					<ul class="icons">
+						<li><a href="#" class="icon brands alt fa-github"><span class="label">GitHub</span></a></li>
+						<li><a href="mailto:kneadu@outlook.com" class="icon solid alt fa-envelope"><span class="label">Email</span></a></li>
+					</ul>
+					<ul class="copyright">
+						<li>&copy; 看得见的数学</li><li>Design: Baoquan Zhang</li><li>Template: <a href="https://html5up.net">HTML5 UP</a></li>
+					</ul>
+				</div>
+			</footer>
+
+		</div>
+
+		<script src="assets/js/jquery.min.js"></script>
+		<script src="assets/js/jquery.scrolly.min.js"></script>
+		<script src="assets/js/jquery.scrollex.min.js"></script>
+		<script src="assets/js/browser.min.js"></script>
+		<script src="assets/js/breakpoints.min.js"></script>
+		<script src="assets/js/util.js"></script>
+		<script src="assets/js/main.js"></script>
+
+		<script>
+		(function () {
+			var CODE = "poincare";
+			var ALIASES = ["poincare", "庞加莱", "彭加勒", "poincaré"];
+			var gate = document.getElementById("gate");
+			if (!gate) return;
+			var input=document.getElementById("gateInput"), errMsg=document.getElementById("gateErr");
+			var okBtn=document.getElementById("gateOk"), cancel=document.getElementById("gateCancel");
+			var pending=null, passed=false, lastFocus=null;
+			function norm(v){ return (v||"").trim().toLowerCase().replace(/\s+/g,""); }
+			function accepted(v){
+				var n=norm(v);
+				if(n===norm(CODE)) return true;
+				for(var i=0;i<ALIASES.length;i++) if(n===norm(ALIASES[i])) return true;
+				return false;
+			}
+			function grab(url){
+				var a=document.createElement("a");
+				a.href=url; a.download=url.split("/").pop();
+				document.body.appendChild(a); a.click(); document.body.removeChild(a);
+			}
+			function open_(){ lastFocus=document.activeElement; gate.hidden=false; errMsg.hidden=true;
+				input.value=""; setTimeout(function(){ input.focus(); },30); }
+			function close_(){ gate.hidden=true; pending=null; if(lastFocus&&lastFocus.focus) lastFocus.focus(); }
+			function submit(){
+				if(accepted(input.value)){ passed=true; var u=pending; close_(); if(u) grab(u); }
+				else { errMsg.hidden=false; input.select(); }
+			}
+			Array.prototype.forEach.call(document.querySelectorAll("a[data-gated]"), function(a){
+				a.addEventListener("click", function(e){
+					e.preventDefault();
+					var url=a.getAttribute("data-gated");
+					if(passed){ grab(url); return; }
+					pending=url; open_();
+				});
+			});
+			okBtn.addEventListener("click", submit);
+			cancel.addEventListener("click", close_);
+			input.addEventListener("keydown", function(e){ if(e.key==="Enter"){ e.preventDefault(); submit(); } });
+			document.addEventListener("keydown", function(e){ if(e.key==="Escape" && !gate.hidden) close_(); });
+			gate.addEventListener("click", function(e){ if(e.target===gate) close_(); });
+		})();
+		</script>
+
+	</body>
+</html>
