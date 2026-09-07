@@ -251,6 +251,21 @@
 
 						<span class="image main"><img src="images/vec_plane.png" alt="平面的点法式" /></span>
 
+						<div class="demos" style="grid-template-columns:1fr">
+							<a class="demo" href="demo-plane.html" target="_blank" rel="noopener">
+								<span class="tag">Interactive</span>
+								<strong>$Ax+By+Cz+D=0$ 的四个滑块</strong>
+								<span class="d">拖 $A,B,C$ 平面转向——因为改的就是法向量本身；
+								拖 $D$ 朝向纹丝不动，平面沿法向滑动 $-D/|\mathbf n|$，
+								那条金色虚线量的就是原点到平面的距离。</span>
+								<span class="go">打开演示 →</span>
+							</a>
+						</div>
+
+						<p>顺带留意平面里那两个红蓝箭头：它们是<strong>两次叉积搭出来的</strong>——
+						先随手找一个垂直于 $\mathbf n$ 的方向，再用 $\mathbf n\times$ 它补齐第三个。
+						这和地面站在脚下建立东、北、天顶坐标系是同一招。</p>
+
 						<div class="concept" style="border-left-color:#ef6a5e">
 							<h3>高斯消元　<span class="en">Gaussian Elimination</span></h3>
 							<dl>
