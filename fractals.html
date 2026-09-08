@@ -92,15 +92,21 @@
 
 						<header class="major">
 							<h1>分形与维数</h1>
-							<p>Fractals &amp; Dimension<br/>
-							<p>一条线是一维，一张纸是二维。那么，窗花是几维？</p>
+							<p>Fractals &amp; Dimension<br />
+							一条线是一维，一张纸是二维。那么，一条无限曲折、却始终画在纸上的线，是几维？</p>
 						</header>
 
-						<span class="image main"><img src="images/frac_hero.png" alt="科赫雪花的每个凸起顶点上生长出谢尔宾斯基三角形" /></span>
+						<span class="image main"><img src="images/frac_hero.jpg" alt="海岸线状的科赫曲线，远处是镂空的谢尔宾斯基四面体" /></span>
 
-						<p>上面这张图里其实有两个分形：海岸线的外轮廓是<strong>科赫曲线</strong>，
-						远处镂空的金字塔是<strong>谢尔宾斯基正四面体</strong>。
-						它们的维数分别是 $1.2619$ 和 $1.6309$，它们都不是整数。</p>
+						<p>上面这张图里其实有两个分形：海岸线状的曲折外轮廓是<strong>科赫曲线</strong>，
+						远处镂空的金字塔是<strong>谢尔宾斯基四面体</strong>——
+						每次把四面体分成四个角上的小四面体，中间挖空，无限重复。</p>
+
+						<p>它们的维数分别是 $1.262$ 和 $2$。科赫曲线卡在一维和二维之间；
+						谢尔宾斯基四面体反而是个例外——虽然被挖得千疮百孔、体积趋于零，
+						它的自相似维数算出来却<strong>恰好落回整数 2</strong>。
+						这两件事一起说明：维数不是"看起来复杂就一定是分数"，
+						得老老实实按公式算。</p>
 
 						<hr class="major" />
 
@@ -132,8 +138,10 @@
 						<div class="demos" style="grid-template-columns:1fr">
 							<a class="demo" href="demo-fractal.html" target="_blank" rel="noopener">
 								<span class="tag">Core</span>
-								<strong>混合分形：科赫 × 谢尔宾斯基</strong>
-								<span class="d">两个滑块分别控制两种分形的递归层数，能看着海龟一笔一笔画出来，
+								<strong>混合分形：科赫 × 谢尔宾斯基三角形</strong>
+								<span class="d">这个演示里配的是谢尔宾斯基<strong>三角形</strong>版本（维数 $\log_2 3\approx1.585$），
+								和上面封面图里的四面体不是同一个构造，但原理一样：
+								两个滑块分别控制两种分形的递归层数，能看着海龟一笔一笔画出来，
 								也能直接跳到结果。层数每加一，图元数量乘几倍——递归的代价在这里看得见。</span>
 								<span class="go">打开演示 →</span>
 							</a>
