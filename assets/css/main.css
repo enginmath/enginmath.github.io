@@ -3950,3 +3950,37 @@ input, select, textarea {
 			opacity: 1;
 			visibility: visible;
 		}
+
+/* ===== 内页模块标题/小标题允许换行（自定义覆盖） ===== */
+header.major {
+	width: 100%;
+	max-width: 100%;
+}
+
+header.major > :first-child,
+header.major h1,
+header.major h2 {
+	display: block;
+	width: 100%;
+	white-space: normal;
+	overflow-wrap: break-word;
+	word-break: break-word;
+}
+
+header.major > p,
+#banner > .inner .content p {
+	display: block;
+	white-space: normal;
+	overflow-wrap: break-word;
+	word-break: break-word;
+	max-width: 100%;
+}
+
+header.major > p br,
+#banner > .inner .content p br {
+	display: inline !important;
+}
+
+#banner > .inner .content {
+	flex-wrap: wrap;
+}
