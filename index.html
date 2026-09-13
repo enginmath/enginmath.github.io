@@ -8,7 +8,7 @@
 	<head>
 		<title>看得见的数学 · Visual Mathematics</title>
 		<meta charset="utf-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<meta name="description" content="用三维图形和交互演示重新讲一遍数学：向量、矩阵、梯度、最小二乘、神经网络与分形。" />
 		<link rel="stylesheet" href="assets/css/main.css" />
 		<noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
@@ -38,6 +38,7 @@
 							<li><a href="fractals.html">分形与维数 &nbsp;Fractals</a></li>
 							<li><a href="solar-tracker.html">实战 · 开机那一下 &nbsp;Homing</a></li>
 							<li><a href="servo-calib.html">实战 · 舵机标定 &nbsp;Servo Calibration</a></li>
+							<li><a href="https://mosaicino.github.io" hreflang="en">English</a></li>
 						</ul>
 						<ul class="actions stacked">
 							<li><a href="vectors.html" class="button primary fit">从向量开始</a></li>
@@ -193,12 +194,12 @@
 										</div>
 									</div>
 									<ul class="actions">
-										<button type="button" class="primary" onclick="sendMail()">Send it over</button>
+										<li><button type="button" class="button primary" onclick="sendMail()">Send it over</button></li>
 										<li><input type="reset" value="Clear" /></li>
 									</ul>
 								</form>
 							</section>
-							<section style="display:flex !important; flex-direction:column !important; justify-content:center !important; min-height:60vh; gap:2.5rem;">
+							<section class="contact-list">
 								<div class="contact-method">
 									<span class="icon solid alt fa-envelope"></span>
 									<h3>邮箱地址</h3>
@@ -207,7 +208,7 @@
 								<div class="contact-method">
 									<span class="icon solid alt fa-user"></span>
 									<h3>关于我</h3>
-									<span>卡蜜儿 -- 一个把舵机拆开，想看看它是如何”思考“的高中生</span>
+									<span>卡蜜儿 -- 一个把舵机拆开，想看看它是如何“思考”的高中生</span>
 								</div>
 								<div class="contact-method">
 									<span class="icon solid alt fa-language"></span>
@@ -222,11 +223,11 @@
 					<footer id="footer">
 						<div class="inner">
 							<ul class="icons">
-								<li><a href="#" class="icon brands alt fa-github"><span class="label">GitHub</span></a></li>
-								<li><a href="mailto:kneadu@outlook.com" class="icon solid alt fa-envelope"><span class="label">Email</span></a></li>
+								<li><a href="https://github.com/mosaicino" class="icon brands alt fa-github"><span class="label">GitHub</span></a></li>
+								<li><a href="mailto:oiccamille@outlook.com" class="icon solid alt fa-envelope"><span class="label">Email</span></a></li>
 							</ul>
 							<ul class="copyright">
-								<li>&copy; 看得见的数学</li><li>Design & Code: Mosaicino</li><li>Template: <a href="https://html5up.net">HTML5 UP</a></li>
+								<li>&copy; 看得见的数学</li><li>Design &amp; Code: Mosaicino</li><li>Template: <a href="https://html5up.net">HTML5 UP</a></li>
 							</ul>
 						</div>
 					</footer>
@@ -247,11 +248,13 @@
 					var email = document.getElementById('email').value;
 					var message = document.getElementById('message').value;
 					var body =
-						"姓名：" + name + "%0D%0A" +
-						"邮箱：" + email + "%0D%0A" +
+						"姓名：" + name + "\n" +
+						"邮箱：" + email + "\n" +
 						"内容：" + message;
 					window.location.href =
-						"mailto:kneadu@outlook.com?subject=网站留言&body=" + body;
+						"mailto:oiccamille@outlook.com" +
+						"?subject=" + encodeURIComponent("网站留言") +
+						"&body=" + encodeURIComponent(body);
 				}
 			</script>
 	</body>
